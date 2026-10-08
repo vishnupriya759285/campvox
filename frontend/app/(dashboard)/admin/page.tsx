@@ -538,14 +538,21 @@ export default function AdminDashboardPage() {
 
       {/* Recent Issues Table with Quick Detail link */}
       <Card className="p-0 overflow-hidden">
-        <div className="px-6 py-4 border-b border-[#E2E6DF] flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-[#E2E6DF] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h3 className="text-base font-bold text-[#123650]">Recent Issues</h3>
-            <p className="text-xs text-brand-muted">Real-time complaint and maintenance activity across campus.</p>
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-bold text-[#123650]">Recent Campus Issues</h3>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                Live Dispatch Ready
+              </span>
+            </div>
+            <p className="text-xs text-brand-muted mt-0.5">
+              Click <strong className="text-[#0B7A55]">"Quick Actions"</strong> or <strong className="text-[#0B7A55]">"+ Assign Worker"</strong> on any row below to assign college workers & switch statuses.
+            </p>
           </div>
           <Link
             href="/issues"
-            className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
+            className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 self-start sm:self-center"
           >
             View all issues
             <ArrowRight className="w-3.5 h-3.5" />
@@ -564,7 +571,7 @@ export default function AdminDashboardPage() {
                 <th className="py-3 px-4">Status</th>
                 <th className="py-3 px-4">Department</th>
                 <th className="py-3 px-4">Assigned Staff</th>
-                <th className="py-3 px-6 text-right">Action</th>
+                <th className="py-3 px-6 text-right">Quick Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E2E6DF]/60">
@@ -593,7 +600,7 @@ export default function AdminDashboardPage() {
                       type="button"
                       onClick={() => handleOpenEdit(issue)}
                       className="hover:opacity-80 transition-opacity text-left"
-                      title="Click to edit actions"
+                      title="Click to change status"
                     >
                       <StatusBadge status={issue.status} size="sm" />
                     </button>
@@ -647,11 +654,11 @@ export default function AdminDashboardPage() {
                       <button
                         type="button"
                         onClick={() => handleOpenEdit(issue)}
-                        className="px-2.5 py-1 text-xs font-bold text-[#0B7A55] bg-[#E1F7EE] hover:bg-[#0B7A55] hover:text-white rounded-lg transition-all inline-flex items-center gap-1 shadow-sm active:scale-95"
-                        title="Edit Actions"
+                        className="px-3 py-1.5 text-xs font-bold text-[#0B7A55] bg-[#E1F7EE] hover:bg-[#0B7A55] hover:text-white rounded-xl transition-all inline-flex items-center gap-1.5 shadow-sm active:scale-95"
+                        title="Quick Actions (Assign worker, update status)"
                       >
-                        <Edit3 className="w-3.5 h-3.5" />
-                        <span>Edit</span>
+                        <Wrench className="w-3.5 h-3.5" />
+                        <span>Quick Actions</span>
                       </button>
                       <Link
                         href={`/issues/${issue.id}`}
