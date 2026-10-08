@@ -3,8 +3,17 @@
 import { ApolloClient, InMemoryCache, createHttpLink, from } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 
+const getGraphqlUri = () => {
+  if (typeof window !== 'undefined') {
+    if (window.location.protocol === 'https:' || window.location.hostname.includes('vercel.app')) {
+      return '/api/graphql';
+    }
+  }
+  return process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:3001/graphql';
+};
+
 const httpLink = createHttpLink({
-  uri: process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:3001/graphql',
+  uri: getGraphqlUri(),
 });
 
 const authLink = setContext((_, { headers }) => {

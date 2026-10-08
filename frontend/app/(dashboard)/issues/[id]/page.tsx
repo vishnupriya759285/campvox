@@ -74,7 +74,36 @@ export default function IssueDetailPage() {
   const [reopenIssue, { loading: reopenLoading }] = useMutation(REOPEN_ISSUE_MUTATION);
   const [addComment, { loading: commentLoading }] = useMutation(ADD_ISSUE_COMMENT_MUTATION);
 
-  const issue = data?.issue;
+  const remoteIssue = data?.issue;
+  const [localIssue, setLocalIssue] = useState<any>(null);
+
+  React.useEffect(() => {
+    if (!remoteIssue && typeof window !== 'undefined') {
+      try {
+        const stored = JSON.parse(localStorage.getItem('campvox_custom_issues') || '[]');
+        const match = stored.find(
+          (i: any) =>
+            i.id === cleanId ||
+            i.id?.toLowerCase() === cleanId?.toLowerCase() ||
+            i.id === rawId
+        );
+        if (match) {
+          setLocalIssue({
+            ...match,
+            reporter: { name: 'Campus Student', role: 'STUDENT' },
+            assignedDepartment: { name: 'Maintenance' },
+            images: (match.imageUrls || []).map((url: string, idx: number) => ({ id: `img-${idx}`, url })),
+            comments: [],
+            statusHistory: [{ id: 'sh-1', newStatus: match.status, createdAt: match.createdAt }],
+          });
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }, [remoteIssue, cleanId, rawId]);
+
+  const issue = remoteIssue || localIssue;
   const departments = deptsData?.departments || [];
   const maintenanceStaff = usersData?.users || [];
 

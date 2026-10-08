@@ -48,7 +48,25 @@ function IssuesListContent() {
     pollInterval: 10000,
   });
 
-  const issues = data?.issues || [];
+  const remoteIssues = data?.issues || [];
+  const [localIssues, setLocalIssues] = useState<any[]>([]);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = JSON.parse(localStorage.getItem('campvox_custom_issues') || '[]');
+        setLocalIssues(stored);
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
+
+  const issues = React.useMemo(() => {
+    const existingIds = new Set(remoteIssues.map((i: any) => i.id));
+    const extra = localIssues.filter((i) => !existingIds.has(i.id));
+    return [...extra, ...remoteIssues];
+  }, [remoteIssues, localIssues]);
 
   // Client-side pagination
   const totalItems = issues.length;
