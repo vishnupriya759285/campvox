@@ -1,0 +1,173 @@
+// FixMyCampus Prisma Schema
+// Database: PostgreSQL (Supabase)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  STUDENT
+  FACULTY
+  STAFF
+  MAINTENANCE
+  ADMIN
+}
+
+enum IssueStatus {
+  REPORTED
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+  VERIFIED
+  REOPENED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum Category {
+  ELECTRICAL
+  PLUMBING
+  WIFI
+  FURNITURE
+  CLEANING
+  EQUIPMENT
+  CLASSROOM
+  LABORATORY
+  OTHER
+}
+
+model User {
+  id           String      @id @default(uuid())
+  name         String
+  email        String      @unique
+  passwordHash String
+  role         Role        @default(STUDENT)
+  departmentId String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  reportedIssues Issue[]      @relation("ReportedIssues")
+  assignedIssues Issue[]      @relation("AssignedStaffIssues")
+  comments       IssueComment[]
+  notifications  Notification[]
+  statusChanges  IssueStatusHistory[] @relation("StatusChanger")
+
+  @@index([role])
+  @@index([departmentId])
+}
+
+model Department {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users  User[]
+  issues Issue[]
+
+  @@index([name])
+}
+
+model Issue {
+  id                   String       @id @default(uuid())
+  title                String
+  description          String
+  category             Category
+  priority             Priority     @default(MEDIUM)
+  location             String
+  status               IssueStatus  @default(REPORTED)
+  reporterId           String
+  assignedDepartmentId String?
+  assignedStaffId      String?
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  resolvedAt           DateTime?
+  verifiedAt           DateTime?
+
+  reporter           User                @relation("ReportedIssues", fields: [reporterId], references: [id], onDelete: Cascade)
+  assignedDepartment Department?         @relation(fields: [assignedDepartmentId], references: [id], onDelete: SetNull)
+  assignedStaff      User?               @relation("AssignedStaffIssues", fields: [assignedStaffId], references: [id], onDelete: SetNull)
+
+  images        IssueImage[]
+  comments      IssueComment[]
+  statusHistory IssueStatusHistory[]
+  notifications Notification[]
+
+  @@index([status])
+  @@index([category])
+  @@index([priority])
+  @@index([reporterId])
+  @@index([assignedStaffId])
+  @@index([assignedDepartmentId])
+  @@index([createdAt])
+}
+
+model IssueImage {
+  id        String   @id @default(uuid())
+  issueId   String
+  url       String
+  createdAt DateTime @default(now())
+
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@index([issueId])
+}
+
+model IssueComment {
+  id        String   @id @default(uuid())
+  issueId   String
+  userId    String
+  comment   String
+  createdAt DateTime @default(now())
+
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([issueId])
+  @@index([userId])
+}
+
+model IssueStatusHistory {
+  id        String       @id @default(uuid())
+  issueId   String
+  oldStatus IssueStatus?
+  newStatus IssueStatus
+  changedBy String
+  createdAt DateTime     @default(now())
+
+  issue     Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  changer   User  @relation("StatusChanger", fields: [changedBy], references: [id], onDelete: Cascade)
+
+  @@index([issueId])
+  @@index([changedBy])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  issueId   String?
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  issue Issue? @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([issueId])
+}

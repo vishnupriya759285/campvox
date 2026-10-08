@@ -1,0 +1,279 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+input AssignIssueInput {
+  departmentId: String
+  issueId: ID!
+  staffId: String
+}
+
+type AuthPayload {
+  token: String!
+  user: UserType!
+}
+
+enum Category {
+  CLASSROOM
+  CLEANING
+  ELECTRICAL
+  EQUIPMENT
+  FURNITURE
+  LABORATORY
+  OTHER
+  PLUMBING
+  WIFI
+}
+
+type CategoryCount {
+  category: Category!
+  count: Int!
+}
+
+input CreateDepartmentInput {
+  description: String
+  name: String!
+}
+
+input CreateIssueInput {
+  category: Category!
+  description: String!
+  imageUrls: [String!]
+  location: String!
+  priority: Priority! = MEDIUM
+  title: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type DepartmentType {
+  createdAt: DateTime!
+  description: String
+  id: ID!
+  inProgressCount: Int!
+  name: String!
+  openIssuesCount: Int!
+  resolvedCount: Int!
+  updatedAt: DateTime!
+}
+
+type DepartmentWorkload {
+  departmentId: String!
+  departmentName: String!
+  inProgressCount: Int!
+  openCount: Int!
+  resolvedCount: Int!
+}
+
+type IssueCommentType {
+  comment: String!
+  createdAt: DateTime!
+  id: ID!
+  issueId: String!
+  user: UserType
+  userId: String!
+}
+
+input IssueFilterInput {
+  category: Category
+  departmentId: String
+  priority: Priority
+  search: String
+  status: IssueStatus
+}
+
+type IssueImageType {
+  createdAt: DateTime!
+  id: ID!
+  issueId: String!
+  url: String!
+}
+
+type IssueStatistics {
+  assigned: Int!
+  inProgress: Int!
+  reopened: Int!
+  reported: Int!
+  resolved: Int!
+  total: Int!
+  verified: Int!
+}
+
+enum IssueStatus {
+  ASSIGNED
+  IN_PROGRESS
+  REOPENED
+  REPORTED
+  RESOLVED
+  VERIFIED
+}
+
+type IssueStatusHistoryType {
+  changedBy: String!
+  changer: UserType
+  createdAt: DateTime!
+  id: ID!
+  issueId: String!
+  newStatus: IssueStatus!
+  oldStatus: IssueStatus
+}
+
+type IssueType {
+  assignedDepartment: DepartmentType
+  assignedDepartmentId: String
+  assignedStaff: UserType
+  assignedStaffId: String
+  category: Category!
+  comments: [IssueCommentType!]!
+  createdAt: DateTime!
+  description: String!
+  id: ID!
+  images: [IssueImageType!]!
+  location: String!
+  priority: Priority!
+  reporter: UserType
+  reporterId: String!
+  resolvedAt: DateTime
+  status: IssueStatus!
+  statusHistory: [IssueStatusHistoryType!]!
+  title: String!
+  updatedAt: DateTime!
+  verifiedAt: DateTime
+}
+
+type LocationCount {
+  count: Int!
+  location: String!
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+type MonthlyTrend {
+  month: String!
+  reportedCount: Int!
+  resolvedCount: Int!
+}
+
+type Mutation {
+  addIssueComment(comment: String!, issueId: ID!): IssueCommentType!
+  assignIssue(input: AssignIssueInput!): IssueType!
+  createDepartment(input: CreateDepartmentInput!): DepartmentType!
+  createIssue(input: CreateIssueInput!): IssueType!
+  deleteDepartment(id: ID!): Boolean!
+  login(input: LoginInput!): AuthPayload!
+  markAllNotificationsRead: Boolean!
+  markNotificationRead(id: ID!): NotificationType!
+  register(input: RegisterInput!): AuthPayload!
+  reopenIssue(issueId: ID!): IssueType!
+  updateDepartment(input: UpdateDepartmentInput!): DepartmentType!
+  updateIssue(input: UpdateIssueInput!): IssueType!
+  updateIssueStatus(input: UpdateIssueStatusInput!): IssueType!
+  updateUserDepartment(departmentId: String, userId: ID!): UserType!
+  updateUserRole(role: Role!, userId: ID!): UserType!
+  uploadImage(base64Data: String!, fileName: String): String!
+  verifyIssue(issueId: ID!): IssueType!
+}
+
+type NotificationType {
+  createdAt: DateTime!
+  id: ID!
+  isRead: Boolean!
+  issue: IssueType
+  issueId: String
+  message: String!
+  title: String!
+  userId: String!
+}
+
+enum Priority {
+  CRITICAL
+  HIGH
+  LOW
+  MEDIUM
+}
+
+type Query {
+  assignedIssues: [IssueType!]!
+  department(id: ID!): DepartmentType!
+  departments: [DepartmentType!]!
+  issue(id: ID!): IssueType!
+  issueComments(issueId: ID!): [IssueCommentType!]!
+  issueStatistics: IssueStatistics!
+  issues(filter: IssueFilterInput): [IssueType!]!
+  issuesByCategory: [CategoryCount!]!
+  issuesByDepartment: [DepartmentWorkload!]!
+  issuesByLocation: [LocationCount!]!
+  me: UserType!
+  monthlyIssueTrends: [MonthlyTrend!]!
+  myIssues: [IssueType!]!
+  notifications: [NotificationType!]!
+  recurringIssues: [RecurringIssue!]!
+  resolutionTimeStatistics: ResolutionTimeStatistics!
+  unreadNotificationCount: Int!
+  user(id: ID!): UserType!
+  users(departmentId: String, role: Role): [UserType!]!
+}
+
+type RecurringIssue {
+  category: Category!
+  count: Int!
+  location: String!
+}
+
+input RegisterInput {
+  departmentId: String
+  email: String!
+  name: String!
+  password: String!
+  role: Role! = STUDENT
+}
+
+type ResolutionTimeStatistics {
+  avgResolutionTimeDays: Float!
+  totalResolvedCount: Int!
+}
+
+enum Role {
+  ADMIN
+  FACULTY
+  MAINTENANCE
+  STAFF
+  STUDENT
+}
+
+input UpdateDepartmentInput {
+  description: String
+  id: ID!
+  name: String
+}
+
+input UpdateIssueInput {
+  category: Category
+  description: String
+  id: ID!
+  location: String
+  priority: Priority
+  title: String
+}
+
+input UpdateIssueStatusInput {
+  issueId: ID!
+  status: IssueStatus!
+}
+
+type UserType {
+  createdAt: DateTime!
+  department: DepartmentType
+  departmentId: String
+  email: String!
+  id: ID!
+  name: String!
+  role: Role!
+  updatedAt: DateTime!
+}
