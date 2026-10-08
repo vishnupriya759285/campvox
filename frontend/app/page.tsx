@@ -49,18 +49,29 @@ export default function LandingPage() {
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 sm:px-8">
           <BrandLogo size="md" />
 
-          <nav className="hidden items-center gap-8 text-sm font-bold text-[#526F89] md:flex" aria-label="Main navigation">
-            <Link href="/" className="border-b-2 border-emerald-600 py-2 text-[#123650]">Home</Link>
-            <a href="#how-it-works" className="transition-colors hover:text-emerald-700">How it works</a>
-            <a href="#services" className="transition-colors hover:text-emerald-700">Campus services</a>
-            <a href="#support" className="transition-colors hover:text-emerald-700">Support</a>
+          <nav className="hidden items-center gap-6 text-sm font-semibold text-[#526F89] md:flex" aria-label="Main navigation">
+            <Link href="/" className="border-b-2 border-emerald-600 py-2 font-bold text-[#123650]">
+              Home
+            </Link>
+            <Link href="/issues?search=Institution" className="transition-colors hover:text-emerald-700">
+              Institution
+            </Link>
+            <Link href="/issues?search=Hostel" className="transition-colors hover:text-emerald-700">
+              Hostel
+            </Link>
+            <Link href="/issues?search=Quarters" className="transition-colors hover:text-emerald-700">
+              Staff Quarters
+            </Link>
+            <Link href="/issues?search=Guest+House" className="transition-colors hover:text-emerald-700">
+              Guest House
+            </Link>
           </nav>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <Link href="/login" className="rounded-full bg-[#E7F6EF] px-4 py-2.5 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100 sm:px-5">
-              Student login
+            <Link href="/dashboard" className="rounded-full bg-[#E7F6EF] px-4 py-2.5 text-sm font-bold text-emerald-800 transition hover:bg-emerald-100 sm:px-5">
+              Student Dashboard
             </Link>
-            <Link href="/issues/new" className="hidden rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white shadow-[0_8px_20px_rgba(22,132,97,0.22)] transition hover:bg-emerald-700 sm:inline-flex">
+            <Link href="/issues/new" className="hidden rounded-full bg-emerald-700 px-5 py-2.5 text-sm font-bold text-white shadow-[0_8px_20px_rgba(22,132,97,0.22)] transition hover:bg-emerald-800 sm:inline-flex">
               Report a concern
             </Link>
           </div>
@@ -84,11 +95,14 @@ export default function LandingPage() {
               CAMPVOX gives students, faculty, and campus teams one clear place to report concerns, stay informed, and make every shared space better.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <Link href="/issues/new" className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-[0_10px_20px_rgba(22,132,97,0.22)] transition hover:-translate-y-0.5 hover:bg-emerald-700">
-                Report a concern <ArrowRight className="h-4 w-4" />
+              <Link href="/dashboard" className="inline-flex items-center gap-2 rounded-2xl bg-emerald-700 px-6 py-3.5 text-sm font-bold text-white shadow-[0_10px_20px_rgba(22,132,97,0.22)] transition hover:-translate-y-0.5 hover:bg-emerald-800">
+                Go to Student Dashboard <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link href="/login" className="inline-flex items-center gap-2 rounded-2xl border border-[#CFE2E7] bg-white/80 px-5 py-3 text-sm font-bold text-[#123650] shadow-sm transition hover:border-emerald-300 hover:bg-white">
-                Sign in to CAMPVOX
+              <Link href="/issues/new" className="inline-flex items-center gap-2 rounded-2xl border border-emerald-300 bg-white/90 px-5 py-3.5 text-sm font-bold text-emerald-900 shadow-sm transition hover:bg-emerald-50">
+                Report a concern
+              </Link>
+              <Link href="/login" className="inline-flex items-center gap-2 rounded-2xl border border-[#CFE2E7] bg-white/80 px-5 py-3.5 text-sm font-bold text-[#123650] shadow-sm transition hover:border-emerald-300 hover:bg-white">
+                Sign in
               </Link>
             </div>
             <div className="mt-10 flex flex-wrap gap-x-7 gap-y-3 text-sm font-semibold text-[#526F89]">
