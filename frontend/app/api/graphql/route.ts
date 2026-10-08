@@ -130,6 +130,182 @@ const DEPARTMENTS = [
   { id: 'dept-facilities', name: 'Facilities', description: 'Desks, doors, windows, and campus furniture', openIssuesCount: 1, inProgressCount: 0, resolvedCount: 15 },
 ];
 
+export interface CollegeWorker {
+  id: string;
+  name: string;
+  email: string;
+  role: 'MAINTENANCE';
+  designation: string;
+  departmentId: string;
+  department: { id: string; name: string };
+  phone?: string;
+  createdAt: string;
+}
+
+const COLLEGE_WORKERS: CollegeWorker[] = [
+  // 1. Electrical Section (3 Workers)
+  {
+    id: 'worker-elec-1',
+    name: 'Rajesh Kumar',
+    email: 'rajesh.electrician@campvox.edu',
+    role: 'MAINTENANCE',
+    designation: 'Senior Campus Electrician (Emp #EW101)',
+    departmentId: 'dept-electrical',
+    department: { id: 'dept-electrical', name: 'Electrical' },
+    phone: '+91 98450 11201',
+    createdAt: '2025-01-10T08:00:00Z',
+  },
+  {
+    id: 'worker-elec-2',
+    name: 'Suresh Varma',
+    email: 'suresh.electrician@campvox.edu',
+    role: 'MAINTENANCE',
+    designation: 'Substation & Panel Technician (Emp #EW102)',
+    departmentId: 'dept-electrical',
+    department: { id: 'dept-electrical', name: 'Electrical' },
+    phone: '+91 98450 11202',
+    createdAt: '2025-01-12T08:00:00Z',
+  },
+  {
+    id: 'worker-elec-3',
+    name: 'Mohan Das',
+    email: 'mohan.electrician@campvox.edu',
+    role: 'MAINTENANCE',
+    designation: 'Lighting & Classroom Fixtures Tech (Emp #EW103)',
+    departmentId: 'dept-electrical',
+    department: { id: 'dept-electrical', name: 'Electrical' },
+    phone: '+91 98450 11203',
+    createdAt: '2025-01-15T08:00:00Z',
+  },
+
+  // 2. Plumbing Section (3 Workers)
+  {
+    id: 'worker-plumb-1',
+    name: 'Ramesh Babu',
+    email: 'ramesh.plumber@campvox.edu',
+    role: 'MAINTENANCE',
+    designation: 'Head Campus Plumber (Emp #PW201)',
+    departmentId: 'dept-plumbing',
+    department: { id: 'dept-plumbing', name: 'Plumbing' },
+    phone: '+91 98450 22301',
+    createdAt: '2025-01-10T08:00:00Z',
+  },
+  {
+    id: 'worker-plumb-2',
+    name: 'K. Venkatesh',
+    email: 'venkatesh.plumber@campvox.edu',
+    role: 'MAINTENANCE',
+    designation: 'Pipeline & Drainage Specialist (Emp #PW202)',
+    departmentId: 'dept-plumbing',
+    department: { id: 'dept-plumbing', name: 'Plumbing' },
+    phone: '+91 98450 22302',
+    createdAt: '2025-01-12T08:00:00Z',
+  },
+  {
+    id: 'worker-plumb-3',
+    name: 'Anand Swamy',
+    email: 'anand.plumber@campvox.edu',
+    role: 'MAINTENANCE',
+    designation: 'Water Supply & Pump Operator (Emp #PW203)',
+    departmentId: 'dept-plumbing',
+    department: { id: 'dept-plumbing', name: 'Plumbing' },
+    phone: '+91 98450 22303',
+    createdAt: '2025-01-15T08:00:00Z',
+  },
+
+  // 3. IT & Network Section (3 Workers)
+  {
+    id: 'worker-it-1',
+    name: 'Karthik Reddy',
+    email: 'karthik.it@campvox.edu',
+    role: 'MAINTENANCE',
+    designation: 'Lead Network Systems Engineer (Emp #NW301)',
+    departmentId: 'dept-wifi',
+    department: { id: 'dept-wifi', name: 'IT & Network' },
+    phone: '+91 98450 33401',
+    createdAt: '2025-01-10T08:00:00Z',
+  },
+  {
+    id: 'worker-it-2',
+    name: 'Priya Sharma',
+    email: 'priya.it@campvox.edu',
+    role: 'MAINTENANCE',
+    designation: 'Wi-Fi & AP Infrastructure Tech (Emp #NW302)',
+    departmentId: 'dept-wifi',
+    department: { id: 'dept-wifi', name: 'IT & Network' },
+    phone: '+91 98450 33402',
+    createdAt: '2025-01-12T08:00:00Z',
+  },
+  {
+    id: 'worker-it-3',
+    name: 'Vignesh Nair',
+    email: 'vignesh.it@campvox.edu',
+    role: 'MAINTENANCE',
+    designation: 'Smart Class & Lab Hardware Tech (Emp #NW303)',
+    departmentId: 'dept-wifi',
+    department: { id: 'dept-wifi', name: 'IT & Network' },
+    phone: '+91 98450 33403',
+    createdAt: '2025-01-15T08:00:00Z',
+  },
+
+  // 4. Facilities & Maintenance Section (3 Workers)
+  {
+    id: 'worker-fac-1',
+    name: 'Murugan Selvam',
+    email: 'murugan.facilities@campvox.edu',
+    role: 'MAINTENANCE',
+    designation: 'Senior Campus Carpenter (Emp #FW401)',
+    departmentId: 'dept-facilities',
+    department: { id: 'dept-facilities', name: 'Facilities' },
+    phone: '+91 98450 44501',
+    createdAt: '2025-01-10T08:00:00Z',
+  },
+  {
+    id: 'worker-fac-2',
+    name: 'G. Balaji',
+    email: 'balaji.facilities@campvox.edu',
+    role: 'MAINTENANCE',
+    designation: 'Civil Works & Masonry Specialist (Emp #FW402)',
+    departmentId: 'dept-facilities',
+    department: { id: 'dept-facilities', name: 'Facilities' },
+    phone: '+91 98450 44502',
+    createdAt: '2025-01-12T08:00:00Z',
+  },
+  {
+    id: 'worker-fac-3',
+    name: 'Lakshmi Narayanan',
+    email: 'lakshmi.facilities@campvox.edu',
+    role: 'MAINTENANCE',
+    designation: 'Facilities & Sanitation Supervisor (Emp #FW403)',
+    departmentId: 'dept-facilities',
+    department: { id: 'dept-facilities', name: 'Facilities' },
+    phone: '+91 98450 44503',
+    createdAt: '2025-01-15T08:00:00Z',
+  },
+];
+
+const ALL_USERS = [
+  {
+    id: 'usr-admin',
+    name: 'Admin Operations',
+    email: 'admin@fixmycampus.edu',
+    role: 'ADMIN',
+    departmentId: 'dept-facilities',
+    department: { id: 'dept-facilities', name: 'Facilities' },
+    createdAt: '2025-01-01T08:00:00Z',
+  },
+  {
+    id: 'usr-student',
+    name: 'Alex Rivera',
+    email: 'student@campvox.edu',
+    role: 'STUDENT',
+    departmentId: null,
+    department: null,
+    createdAt: '2025-01-05T08:00:00Z',
+  },
+  ...COLLEGE_WORKERS,
+];
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -325,18 +501,22 @@ export async function POST(req: NextRequest) {
     if (op.includes('assignissue') || op.includes('assign') || q.includes('assignissue')) {
       const { issueId, departmentId, staffId } = variables?.input || {};
       const cleanId = (issueId || '').toString().trim().replace(/^#/, '');
-      const dept = DEPARTMENTS.find((d) => d.id === departmentId);
+      const assignedWorker = COLLEGE_WORKERS.find((w) => w.id === staffId);
+      const effectiveDeptId = departmentId || assignedWorker?.departmentId;
+      const dept = DEPARTMENTS.find((d) => d.id === effectiveDeptId);
+      const staffName = assignedWorker ? assignedWorker.name : (variables?.input?.staffName || 'Maintenance Team');
+
       const target = IN_MEMORY_ISSUES.find(
         (i) => i.id === cleanId || i.id.toLowerCase() === cleanId.toLowerCase()
       );
       if (target) {
-        if (departmentId) {
-          target.assignedDepartmentId = departmentId;
-          target.assignedDepartment = dept ? { id: dept.id, name: dept.name } : { id: departmentId, name: 'Operations' };
+        if (effectiveDeptId) {
+          target.assignedDepartmentId = effectiveDeptId;
+          target.assignedDepartment = dept ? { id: dept.id, name: dept.name } : { id: effectiveDeptId, name: 'Operations' };
         }
-        if (staffId) {
-          target.assignedStaffId = staffId;
-          target.assignedStaff = { id: staffId, name: 'Assigned Team' };
+        if (staffId || staffName) {
+          target.assignedStaffId = staffId || 'staff-assigned';
+          target.assignedStaff = { id: staffId || 'staff-assigned', name: staffName };
         }
         target.status = 'ASSIGNED';
         target.updatedAt = new Date().toISOString();
@@ -348,8 +528,25 @@ export async function POST(req: NextRequest) {
             id: cleanId,
             status: 'ASSIGNED',
             assignedDepartment: dept ? { id: dept.id, name: dept.name } : null,
-            assignedStaff: { id: staffId || 'usr-maint', name: 'Maintenance Team' },
+            assignedStaff: { id: staffId || 'usr-maint', name: staffName },
           },
+        },
+      });
+    }
+
+    // Handle GetUsers / Users
+    if (op.includes('getusers') || op.includes('users') || q.includes('users(') || q.includes('users {')) {
+      const { role, departmentId } = variables || {};
+      let filtered = ALL_USERS;
+      if (role) {
+        filtered = filtered.filter((u) => u.role === role);
+      }
+      if (departmentId) {
+        filtered = filtered.filter((u) => u.departmentId === departmentId);
+      }
+      return NextResponse.json({
+        data: {
+          users: filtered,
         },
       });
     }

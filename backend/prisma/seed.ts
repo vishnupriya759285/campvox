@@ -107,7 +107,45 @@ async function main() {
     },
   });
 
-  console.log('✅ Users seeded (Admin, Student, Faculty, Maintenance)');
+  const workerSeedHash = await bcrypt.hash('Worker@123', salt);
+
+  const collegeWorkersData = [
+    // 1. Electrical Section (3 Workers)
+    { name: 'Rajesh Kumar', email: 'rajesh.electrician@campvox.edu', deptId: electrical.id },
+    { name: 'Suresh Varma', email: 'suresh.electrician@campvox.edu', deptId: electrical.id },
+    { name: 'Mohan Das', email: 'mohan.electrician@campvox.edu', deptId: electrical.id },
+
+    // 2. Plumbing Section (3 Workers)
+    { name: 'Ramesh Babu', email: 'ramesh.plumber@campvox.edu', deptId: plumbing.id },
+    { name: 'K. Venkatesh', email: 'venkatesh.plumber@campvox.edu', deptId: plumbing.id },
+    { name: 'Anand Swamy', email: 'anand.plumber@campvox.edu', deptId: plumbing.id },
+
+    // 3. IT & Network Section (3 Workers)
+    { name: 'Karthik Reddy', email: 'karthik.it@campvox.edu', deptId: itSupport.id },
+    { name: 'Priya Sharma', email: 'priya.it@campvox.edu', deptId: itSupport.id },
+    { name: 'Vignesh Nair', email: 'vignesh.it@campvox.edu', deptId: itSupport.id },
+
+    // 4. Facilities & Maintenance Section (3 Workers)
+    { name: 'Murugan Selvam', email: 'murugan.facilities@campvox.edu', deptId: maintenance.id },
+    { name: 'G. Balaji', email: 'balaji.facilities@campvox.edu', deptId: maintenance.id },
+    { name: 'Lakshmi Narayanan', email: 'lakshmi.facilities@campvox.edu', deptId: maintenance.id },
+  ];
+
+  for (const worker of collegeWorkersData) {
+    await prisma.user.upsert({
+      where: { email: worker.email },
+      update: { name: worker.name, departmentId: worker.deptId },
+      create: {
+        name: worker.name,
+        email: worker.email,
+        passwordHash: workerSeedHash,
+        role: Role.MAINTENANCE,
+        departmentId: worker.deptId,
+      },
+    });
+  }
+
+  console.log('✅ Users seeded (Admin, Student, Faculty, Maintenance + 12 Registered College Workers)');
 
   // 3. Seed Sample Issues
   const issueCount = await prisma.issue.count();

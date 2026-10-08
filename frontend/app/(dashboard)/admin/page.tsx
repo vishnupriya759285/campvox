@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useQuery, useMutation } from '@apollo/client';
-import { GET_ANALYTICS_OVERVIEW, GET_ISSUES, GET_DEPARTMENTS } from '@/graphql/queries';
+import { GET_ANALYTICS_OVERVIEW, GET_ISSUES, GET_DEPARTMENTS, GET_USERS } from '@/graphql/queries';
 import { UPDATE_ISSUE_STATUS_MUTATION, ASSIGN_ISSUE_MUTATION } from '@/graphql/mutations';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { PriorityBadge } from '@/components/ui/PriorityBadge';
@@ -27,6 +27,13 @@ import {
   Edit3,
   Play,
   Shield,
+  Phone,
+  Mail,
+  Zap,
+  Droplets,
+  Wifi,
+  Hammer,
+  UserCheck,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import {
@@ -40,6 +47,13 @@ import {
   YAxis,
   Tooltip,
 } from 'recharts';
+import {
+  COLLEGE_WORKERS,
+  WORKER_SECTIONS,
+  CollegeWorker,
+  getWorkerById,
+  findWorkerByNameOrEmail,
+} from '@/lib/workers';
 
 export default function AdminDashboardPage() {
   const { data: analyticsData, loading: analyticsLoading, refetch: refetchAnalytics } = useQuery(GET_ANALYTICS_OVERVIEW, {
@@ -59,6 +73,35 @@ export default function AdminDashboardPage() {
     { id: 'dept-facilities', name: 'Facilities' },
   ];
 
+  const { data: usersData } = useQuery(GET_USERS, {
+    variables: { role: 'MAINTENANCE' },
+    pollInterval: 10000,
+  });
+
+  const allWorkers: CollegeWorker[] = React.useMemo(() => {
+    const remote = (usersData?.users || []).map((u: any) => {
+      const fallback = COLLEGE_WORKERS.find(cw => cw.id === u.id || cw.email === u.email);
+      return {
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        section: fallback?.section || u.department?.name || 'Facilities & Civil',
+        departmentId: u.departmentId || fallback?.departmentId || 'dept-facilities',
+        departmentName: u.department?.name || fallback?.departmentName || 'Facilities',
+        designation: fallback?.designation || 'Campus Maintenance Staff',
+        phone: fallback?.phone || '+91 98450 00000',
+        badgeBg: fallback?.badgeBg || 'bg-slate-50',
+        badgeText: fallback?.badgeText || 'text-slate-700 border-slate-200',
+      };
+    });
+    if (remote.length > 0) {
+      const existingIds = new Set(remote.map((r: any) => r.id));
+      const missing = COLLEGE_WORKERS.filter(cw => !existingIds.has(cw.id));
+      return [...remote, ...missing];
+    }
+    return COLLEGE_WORKERS;
+  }, [usersData]);
+
   const [updateIssueStatus] = useMutation(UPDATE_ISSUE_STATUS_MUTATION);
   const [assignIssue] = useMutation(ASSIGN_ISSUE_MUTATION);
 
@@ -67,7 +110,9 @@ export default function AdminDashboardPage() {
   const [editStatus, setEditStatus] = React.useState<string>('REPORTED');
   const [editPriority, setEditPriority] = React.useState<string>('HIGH');
   const [editDeptId, setEditDeptId] = React.useState<string>('');
+  const [editStaffId, setEditStaffId] = React.useState<string>('');
   const [editStaffName, setEditStaffName] = React.useState<string>('');
+  const [workerFilterSection, setWorkerFilterSection] = React.useState<string>('ALL');
   const [isSavingAction, setIsSavingAction] = React.useState(false);
   const [actionSuccessMsg, setActionSuccessMsg] = React.useState<string>('');
   const [actionErrorMsg, setActionErrorMsg] = React.useState<string>('');
@@ -153,17 +198,72 @@ export default function AdminDashboardPage() {
     setEditingIssue(issue);
     setEditStatus(issue.status || 'REPORTED');
     setEditPriority(issue.priority || 'HIGH');
-    setEditDeptId(issue.assignedDepartmentId || issue.assignedDepartment?.id || '');
-    setEditStaffName(issue.assignedStaff?.name || '');
+
+    // Auto-detect department if empty
+    let defaultDept = issue.assignedDepartmentId || issue.assignedDepartment?.id || '';
+    if (!defaultDept && issue.category) {
+      const cat = (issue.category || '').toUpperCase();
+      if (cat === 'ELECTRICAL') defaultDept = 'dept-electrical';
+      else if (cat === 'PLUMBING') defaultDept = 'dept-plumbing';
+      else if (cat === 'WIFI') defaultDept = 'dept-wifi';
+      else defaultDept = 'dept-facilities';
+    }
+    setEditDeptId(defaultDept);
+
+    // Auto-match assigned worker
+    const assignedId = issue.assignedStaffId || issue.assignedStaff?.id || '';
+    const assignedName = issue.assignedStaff?.name || '';
+    const matchedWorker = allWorkers.find(
+      (w) => w.id === assignedId || (assignedName && w.name.toLowerCase() === assignedName.toLowerCase())
+    );
+
+    if (matchedWorker) {
+      setEditStaffId(matchedWorker.id);
+      setEditStaffName(matchedWorker.name);
+      if (!issue.assignedDepartmentId && !issue.assignedDepartment?.id) {
+        setEditDeptId(matchedWorker.departmentId);
+      }
+    } else {
+      setEditStaffId(assignedId);
+      setEditStaffName(assignedName);
+    }
+
+    setWorkerFilterSection('ALL');
     setActionErrorMsg('');
     setActionSuccessMsg('');
   };
+
+  const handleSelectWorker = (workerId: string) => {
+    if (!workerId) {
+      setEditStaffId('');
+      setEditStaffName('');
+      return;
+    }
+    const worker = allWorkers.find((w) => w.id === workerId);
+    if (worker) {
+      setEditStaffId(worker.id);
+      setEditStaffName(worker.name);
+      setEditDeptId(worker.departmentId);
+      if (editStatus === 'REPORTED') {
+        setEditStatus('ASSIGNED');
+      }
+    }
+  };
+
+  const selectedActiveWorker = React.useMemo(() => {
+    return allWorkers.find((w) => w.id === editStaffId) || null;
+  }, [allWorkers, editStaffId]);
 
   const handleSaveAction = async (overrideStatus?: string) => {
     if (!editingIssue) return;
     setIsSavingAction(true);
     setActionErrorMsg('');
-    const targetStatus = overrideStatus || editStatus;
+
+    // Auto-elevate to ASSIGNED if worker is chosen while in REPORTED state
+    let targetStatus = overrideStatus || editStatus;
+    if (!overrideStatus && targetStatus === 'REPORTED' && editStaffId) {
+      targetStatus = 'ASSIGNED';
+    }
 
     try {
       await updateIssueStatus({
@@ -175,26 +275,33 @@ export default function AdminDashboardPage() {
         },
       });
 
-      if (editDeptId || editStaffName) {
+      if (editDeptId || editStaffId || editStaffName) {
         await assignIssue({
           variables: {
             input: {
               issueId: editingIssue.id,
               departmentId: editDeptId || null,
-              staffId: editStaffName ? `staff-${Date.now()}` : null,
+              staffId: editStaffId || (editStaffName ? `staff-${Date.now()}` : null),
             },
           },
         });
       }
 
       const selectedDeptObj = departments.find((d: any) => d.id === editDeptId);
+      const selectedWorker = allWorkers.find((w) => w.id === editStaffId);
+
       const updatedIssue = {
         ...editingIssue,
         status: targetStatus,
         priority: editPriority,
         assignedDepartmentId: editDeptId || null,
-        assignedDepartment: selectedDeptObj ? { id: selectedDeptObj.id, name: selectedDeptObj.name } : editingIssue.assignedDepartment,
-        assignedStaff: editStaffName ? { id: 'staff-assigned', name: editStaffName } : editingIssue.assignedStaff,
+        assignedDepartment: selectedDeptObj
+          ? { id: selectedDeptObj.id, name: selectedDeptObj.name }
+          : editingIssue.assignedDepartment,
+        assignedStaffId: editStaffId || null,
+        assignedStaff: selectedWorker
+          ? { id: selectedWorker.id, name: selectedWorker.name }
+          : (editStaffName ? { id: editStaffId || 'staff-assigned', name: editStaffName } : editingIssue.assignedStaff),
         updatedAt: new Date().toISOString(),
       };
 
@@ -212,7 +319,8 @@ export default function AdminDashboardPage() {
       refetchIssues();
       refetchAnalytics();
 
-      setActionSuccessMsg(`Issue #${editingIssue.id} updated to ${targetStatus}!`);
+      const workerNotice = selectedWorker ? ` & assigned to ${selectedWorker.name} (${selectedWorker.section})` : '';
+      setActionSuccessMsg(`Issue #${editingIssue.id} updated to ${targetStatus}${workerNotice}!`);
       setTimeout(() => {
         setEditingIssue(null);
         setActionSuccessMsg('');
@@ -493,8 +601,46 @@ export default function AdminDashboardPage() {
                   <td className="py-3.5 px-4 text-brand-text text-xs">
                     {issue.assignedDepartment?.name || 'Unassigned'}
                   </td>
-                  <td className="py-3.5 px-4 text-brand-muted text-xs">
-                    {issue.assignedStaff?.name || 'None'}
+                  <td className="py-3.5 px-4 text-xs">
+                    {(() => {
+                      const staffName = issue.assignedStaff?.name;
+                      const staffId = issue.assignedStaffId || issue.assignedStaff?.id;
+                      const worker = allWorkers.find(
+                        (w) =>
+                          w.id === staffId ||
+                          (staffName && w.name.toLowerCase() === staffName.toLowerCase())
+                      );
+                      if (worker) {
+                        return (
+                          <div
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200/80 text-[#123650]"
+                            title={`${worker.name} • ${worker.designation} • ${worker.phone}`}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                            <span className="font-bold text-xs text-emerald-950">{worker.name}</span>
+                            <span className="text-[10px] font-semibold text-slate-500">
+                              ({worker.section})
+                            </span>
+                          </div>
+                        );
+                      }
+                      if (staffName) {
+                        return (
+                          <span className="font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
+                            {staffName}
+                          </span>
+                        );
+                      }
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEdit(issue)}
+                          className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 bg-emerald-50/70 hover:bg-emerald-100 border border-dashed border-emerald-300 px-2 py-0.5 rounded-lg transition-colors inline-flex items-center gap-1"
+                        >
+                          <span>+ Assign Worker</span>
+                        </button>
+                      );
+                    })()}
                   </td>
                   <td className="py-3.5 px-6 text-right">
                     <div className="flex items-center justify-end gap-1.5">
@@ -622,18 +768,194 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            {/* Assigned Staff Input */}
-            <div>
-              <label className="block text-xs font-bold text-[#123650] uppercase tracking-wider mb-1.5">
-                Assigned Staff / Team Note
-              </label>
-              <input
-                type="text"
-                value={editStaffName}
-                onChange={(e) => setEditStaffName(e.target.value)}
-                placeholder="e.g. Maintenance Team A, Duty Plumber"
-                className="w-full px-3.5 py-2 text-xs font-medium bg-white border border-slate-200 rounded-xl text-[#123650] focus:ring-2 focus:ring-[#0B7A55]/20 focus:border-[#0B7A55] outline-none"
-              />
+            {/* College Worker Assignment Section */}
+            <div className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/40 p-4 space-y-3.5 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-[#0B7A55] text-white flex items-center justify-center font-bold text-xs shadow-sm shrink-0">
+                    <UserCheck className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-[#123650] uppercase tracking-wider block">
+                      Assign College Worker (12 Registered)
+                    </label>
+                    <p className="text-[11px] text-slate-500 font-medium">
+                      Select official maintenance staff from the respective campus section
+                    </p>
+                  </div>
+                </div>
+
+                {/* Section Filter Pills */}
+                <div className="flex flex-wrap items-center gap-1 bg-white border border-slate-200 p-1 rounded-xl text-[10px] font-bold text-slate-600">
+                  <button
+                    type="button"
+                    onClick={() => setWorkerFilterSection('ALL')}
+                    className={`px-2 py-0.5 rounded-lg transition-all ${
+                      workerFilterSection === 'ALL'
+                        ? 'bg-[#0B7A55] text-white shadow-xs'
+                        : 'hover:bg-slate-100'
+                    }`}
+                  >
+                    All (12)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setWorkerFilterSection('dept-electrical')}
+                    className={`px-2 py-0.5 rounded-lg transition-all ${
+                      workerFilterSection === 'dept-electrical'
+                        ? 'bg-[#0B7A55] text-white shadow-xs'
+                        : 'hover:bg-slate-100'
+                    }`}
+                  >
+                    ⚡ Electrical
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setWorkerFilterSection('dept-plumbing')}
+                    className={`px-2 py-0.5 rounded-lg transition-all ${
+                      workerFilterSection === 'dept-plumbing'
+                        ? 'bg-[#0B7A55] text-white shadow-xs'
+                        : 'hover:bg-slate-100'
+                    }`}
+                  >
+                    🚰 Plumbing
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setWorkerFilterSection('dept-wifi')}
+                    className={`px-2 py-0.5 rounded-lg transition-all ${
+                      workerFilterSection === 'dept-wifi'
+                        ? 'bg-[#0B7A55] text-white shadow-xs'
+                        : 'hover:bg-slate-100'
+                    }`}
+                  >
+                    📶 IT
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setWorkerFilterSection('dept-facilities')}
+                    className={`px-2 py-0.5 rounded-lg transition-all ${
+                      workerFilterSection === 'dept-facilities'
+                        ? 'bg-[#0B7A55] text-white shadow-xs'
+                        : 'hover:bg-slate-100'
+                    }`}
+                  >
+                    🏢 Facilities
+                  </button>
+                </div>
+              </div>
+
+              {/* Worker Dropdown Selector */}
+              <div>
+                <select
+                  value={editStaffId}
+                  onChange={(e) => handleSelectWorker(e.target.value)}
+                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-white border border-emerald-300 rounded-xl text-[#123650] focus:ring-2 focus:ring-[#0B7A55]/20 focus:border-[#0B7A55] outline-none shadow-sm cursor-pointer"
+                >
+                  <option value="">-- Choose Registered College Worker --</option>
+                  {WORKER_SECTIONS.filter(
+                    (s) => workerFilterSection === 'ALL' || s.id === workerFilterSection
+                  ).map((sec) => {
+                    const secWorkers = allWorkers.filter((w) => w.departmentId === sec.id);
+                    if (secWorkers.length === 0) return null;
+                    return (
+                      <optgroup key={sec.id} label={`${sec.icon} ${sec.name}`}>
+                        {secWorkers.map((w) => (
+                          <option key={w.id} value={w.id}>
+                            {w.name} – {w.designation} ({w.phone})
+                          </option>
+                        ))}
+                      </optgroup>
+                    );
+                  })}
+                </select>
+              </div>
+
+              {/* Selected Worker Profile Card */}
+              {selectedActiveWorker ? (
+                <div className="p-3.5 bg-white rounded-xl border border-emerald-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fadeIn">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-sm shrink-0 border border-emerald-300">
+                      {selectedActiveWorker.name
+                        .split(' ')
+                        .map((n: string) => n[0])
+                        .join('')
+                        .slice(0, 2)}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-[#123650]">
+                          {selectedActiveWorker.name}
+                        </span>
+                        <span
+                          className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${selectedActiveWorker.badgeBg} ${selectedActiveWorker.badgeText}`}
+                        >
+                          {selectedActiveWorker.section}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-600 font-medium">
+                        {selectedActiveWorker.designation}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-3 mt-1 text-[11px] text-slate-500 font-mono">
+                        <span className="flex items-center gap-1">
+                          <Phone className="w-3 h-3 text-emerald-600" />
+                          {selectedActiveWorker.phone}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Mail className="w-3 h-3 text-slate-400" />
+                          {selectedActiveWorker.email}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                    <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                      On-Duty Dispatch
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditStaffId('');
+                        setEditStaffName('');
+                      }}
+                      className="text-[11px] font-bold text-slate-400 hover:text-rose-600 px-2 py-1 transition-colors"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-[11px] text-slate-500 italic flex items-center gap-1.5 px-1">
+                  <AlertCircle className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span>
+                    Select any of the 12 registered workers above to assign work directly to their queue.
+                  </span>
+                </div>
+              )}
+
+              {/* Optional Custom Team Note */}
+              <div className="pt-2 border-t border-emerald-100">
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                  Assignment Note / Shift Instructions (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={editStaffName && !selectedActiveWorker ? editStaffName : ''}
+                  onChange={(e) => {
+                    if (!selectedActiveWorker) {
+                      setEditStaffName(e.target.value);
+                    }
+                  }}
+                  placeholder={
+                    selectedActiveWorker
+                      ? `Task assigned to ${selectedActiveWorker.name}`
+                      : 'e.g. Bring replacement capacitor, check valve'
+                  }
+                  disabled={!!selectedActiveWorker}
+                  className="w-full px-3 py-1.5 text-xs font-medium bg-white border border-slate-200 rounded-lg text-[#123650] placeholder:text-slate-400 outline-none disabled:bg-slate-50 disabled:text-slate-500"
+                />
+              </div>
             </div>
 
             {/* Action Buttons */}

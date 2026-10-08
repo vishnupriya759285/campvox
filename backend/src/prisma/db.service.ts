@@ -116,17 +116,45 @@ export class DbService implements OnModuleInit {
 
     this.departments = [
       { id: 'dept-electrical', name: 'Electrical', description: 'Power, wiring, fans, lighting, and electrical panels', createdAt: new Date(), updatedAt: new Date() },
-      { id: 'dept-it', name: 'IT Support', description: 'Campus Wi-Fi, computer labs, projectors, and networking', createdAt: new Date(), updatedAt: new Date() },
       { id: 'dept-plumbing', name: 'Plumbing', description: 'Restrooms, water supply, washbasins, and pipeline leaks', createdAt: new Date(), updatedAt: new Date() },
-      { id: 'dept-housekeeping', name: 'Housekeeping', description: 'Classroom cleanliness, waste management, and sanitization', createdAt: new Date(), updatedAt: new Date() },
+      { id: 'dept-wifi', name: 'IT & Network', description: 'Campus Wi-Fi, computer labs, projectors, and networking', createdAt: new Date(), updatedAt: new Date() },
+      { id: 'dept-facilities', name: 'Facilities', description: 'Furniture repair, carpentry, civil maintenance, and air conditioning', createdAt: new Date(), updatedAt: new Date() },
+      { id: 'dept-it', name: 'IT Support', description: 'Campus Wi-Fi, computer labs, projectors, and networking', createdAt: new Date(), updatedAt: new Date() },
       { id: 'dept-maintenance', name: 'General Maintenance', description: 'Furniture repair, carpentry, civil maintenance, and air conditioning', createdAt: new Date(), updatedAt: new Date() },
+      { id: 'dept-housekeeping', name: 'Housekeeping', description: 'Classroom cleanliness, waste management, and sanitization', createdAt: new Date(), updatedAt: new Date() },
+    ];
+
+    const workerHash = await bcrypt.hash('Worker@123', salt);
+
+    // 12 Registered College Workers (3 per section of work)
+    const collegeWorkers: UserEntity[] = [
+      // 1. Electrical Section (3 Workers)
+      { id: 'worker-elec-1', name: 'Rajesh Kumar', email: 'rajesh.electrician@campvox.edu', passwordHash: workerHash, role: Role.MAINTENANCE, departmentId: 'dept-electrical', createdAt: new Date(), updatedAt: new Date() },
+      { id: 'worker-elec-2', name: 'Suresh Varma', email: 'suresh.electrician@campvox.edu', passwordHash: workerHash, role: Role.MAINTENANCE, departmentId: 'dept-electrical', createdAt: new Date(), updatedAt: new Date() },
+      { id: 'worker-elec-3', name: 'Mohan Das', email: 'mohan.electrician@campvox.edu', passwordHash: workerHash, role: Role.MAINTENANCE, departmentId: 'dept-electrical', createdAt: new Date(), updatedAt: new Date() },
+
+      // 2. Plumbing Section (3 Workers)
+      { id: 'worker-plumb-1', name: 'Ramesh Babu', email: 'ramesh.plumber@campvox.edu', passwordHash: workerHash, role: Role.MAINTENANCE, departmentId: 'dept-plumbing', createdAt: new Date(), updatedAt: new Date() },
+      { id: 'worker-plumb-2', name: 'K. Venkatesh', email: 'venkatesh.plumber@campvox.edu', passwordHash: workerHash, role: Role.MAINTENANCE, departmentId: 'dept-plumbing', createdAt: new Date(), updatedAt: new Date() },
+      { id: 'worker-plumb-3', name: 'Anand Swamy', email: 'anand.plumber@campvox.edu', passwordHash: workerHash, role: Role.MAINTENANCE, departmentId: 'dept-plumbing', createdAt: new Date(), updatedAt: new Date() },
+
+      // 3. IT & Network Section (3 Workers)
+      { id: 'worker-it-1', name: 'Karthik Reddy', email: 'karthik.it@campvox.edu', passwordHash: workerHash, role: Role.MAINTENANCE, departmentId: 'dept-wifi', createdAt: new Date(), updatedAt: new Date() },
+      { id: 'worker-it-2', name: 'Priya Sharma', email: 'priya.it@campvox.edu', passwordHash: workerHash, role: Role.MAINTENANCE, departmentId: 'dept-wifi', createdAt: new Date(), updatedAt: new Date() },
+      { id: 'worker-it-3', name: 'Vignesh Nair', email: 'vignesh.it@campvox.edu', passwordHash: workerHash, role: Role.MAINTENANCE, departmentId: 'dept-wifi', createdAt: new Date(), updatedAt: new Date() },
+
+      // 4. Facilities & Maintenance Section (3 Workers)
+      { id: 'worker-fac-1', name: 'Murugan Selvam', email: 'murugan.facilities@campvox.edu', passwordHash: workerHash, role: Role.MAINTENANCE, departmentId: 'dept-facilities', createdAt: new Date(), updatedAt: new Date() },
+      { id: 'worker-fac-2', name: 'G. Balaji', email: 'balaji.facilities@campvox.edu', passwordHash: workerHash, role: Role.MAINTENANCE, departmentId: 'dept-facilities', createdAt: new Date(), updatedAt: new Date() },
+      { id: 'worker-fac-3', name: 'Lakshmi Narayanan', email: 'lakshmi.facilities@campvox.edu', passwordHash: workerHash, role: Role.MAINTENANCE, departmentId: 'dept-facilities', createdAt: new Date(), updatedAt: new Date() },
     ];
 
     this.users = [
-      { id: 'usr-admin', name: 'Admin Operations', email: 'admin@fixmycampus.edu', passwordHash: adminHash, role: Role.ADMIN, departmentId: 'dept-maintenance', createdAt: new Date(), updatedAt: new Date() },
+      { id: 'usr-admin', name: 'Admin Operations', email: 'admin@fixmycampus.edu', passwordHash: adminHash, role: Role.ADMIN, departmentId: 'dept-facilities', createdAt: new Date(), updatedAt: new Date() },
       { id: 'usr-student', name: 'Vishnupriya M. V.', email: 'student@fixmycampus.edu', passwordHash: studentHash, role: Role.STUDENT, departmentId: null, createdAt: new Date(), updatedAt: new Date() },
       { id: 'usr-faculty', name: 'Dr. Animesh Roy', email: 'faculty@fixmycampus.edu', passwordHash: facultyHash, role: Role.FACULTY, departmentId: null, createdAt: new Date(), updatedAt: new Date() },
-      { id: 'usr-maint', name: 'Sajeev K.', email: 'maintenance@fixmycampus.edu', passwordHash: maintHash, role: Role.MAINTENANCE, departmentId: 'dept-maintenance', createdAt: new Date(), updatedAt: new Date() },
+      { id: 'usr-maint', name: 'Sajeev K.', email: 'maintenance@fixmycampus.edu', passwordHash: maintHash, role: Role.MAINTENANCE, departmentId: 'dept-facilities', createdAt: new Date(), updatedAt: new Date() },
+      ...collegeWorkers,
     ];
 
     const now = new Date();

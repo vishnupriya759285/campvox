@@ -39,8 +39,18 @@ import {
   ExternalLink,
   Copy,
   Navigation,
+  Phone,
+  Mail,
+  UserCheck,
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
+import {
+  COLLEGE_WORKERS,
+  WORKER_SECTIONS,
+  CollegeWorker,
+  getWorkerById,
+  findWorkerByNameOrEmail,
+} from '@/lib/workers';
 
 export default function IssueDetailPage() {
   const { id } = useParams();
@@ -66,7 +76,32 @@ export default function IssueDetailPage() {
   const { data: deptsData } = useQuery(GET_DEPARTMENTS);
   const { data: usersData } = useQuery(GET_USERS, {
     variables: { role: 'MAINTENANCE' },
+    pollInterval: 10000,
   });
+
+  const allWorkers: CollegeWorker[] = React.useMemo(() => {
+    const remote = (usersData?.users || []).map((u: any) => {
+      const fallback = COLLEGE_WORKERS.find(cw => cw.id === u.id || cw.email === u.email);
+      return {
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        section: fallback?.section || u.department?.name || 'Facilities & Civil',
+        departmentId: u.departmentId || fallback?.departmentId || 'dept-facilities',
+        departmentName: u.department?.name || fallback?.departmentName || 'Facilities',
+        designation: fallback?.designation || 'Campus Maintenance Staff',
+        phone: fallback?.phone || '+91 98450 00000',
+        badgeBg: fallback?.badgeBg || 'bg-slate-50',
+        badgeText: fallback?.badgeText || 'text-slate-700 border-slate-200',
+      };
+    });
+    if (remote.length > 0) {
+      const existingIds = new Set(remote.map((r: any) => r.id));
+      const missing = COLLEGE_WORKERS.filter(cw => !existingIds.has(cw.id));
+      return [...remote, ...missing];
+    }
+    return COLLEGE_WORKERS;
+  }, [usersData]);
 
   const [updateStatus, { loading: statusLoading }] = useMutation(UPDATE_ISSUE_STATUS_MUTATION);
   const [assignIssue, { loading: assignLoading }] = useMutation(ASSIGN_ISSUE_MUTATION);
@@ -104,8 +139,13 @@ export default function IssueDetailPage() {
   }, [remoteIssue, cleanId, rawId]);
 
   const issue = remoteIssue || localIssue;
-  const departments = deptsData?.departments || [];
-  const maintenanceStaff = usersData?.users || [];
+  const departments = deptsData?.departments || [
+    { id: 'dept-electrical', name: 'Electrical' },
+    { id: 'dept-plumbing', name: 'Plumbing' },
+    { id: 'dept-wifi', name: 'IT & Network' },
+    { id: 'dept-facilities', name: 'Facilities' },
+  ];
+  const maintenanceStaff = allWorkers;
 
   const isReporter = user && issue && user.id === issue.reporterId;
 
@@ -454,12 +494,65 @@ export default function IssueDetailPage() {
               </span>
             </div>
 
-            <div className="bg-white rounded-2xl border border-[#DDE7E1] p-4 shadow-[0_2px_8px_rgba(15,60,33,0.02)]">
-              <span className="text-xs font-bold text-emerald-800/80 uppercase tracking-wider block">Assigned Staff</span>
-              <span className="text-base font-extrabold text-emerald-950 mt-1 block truncate">
-                {issue.assignedStaff?.name || 'Unassigned'}
-              </span>
-            </div>
+            {(() => {
+              const staffName = issue.assignedStaff?.name;
+              const staffId = issue.assignedStaffId || issue.assignedStaff?.id;
+              const worker = allWorkers.find(
+                (w) =>
+                  w.id === staffId ||
+                  (staffName && w.name.toLowerCase() === staffName.toLowerCase())
+              );
+
+              if (worker) {
+                return (
+                  <div className="bg-white rounded-2xl border border-emerald-200 p-4 shadow-[0_2px_8px_rgba(15,60,33,0.04)] space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-emerald-800/80 uppercase tracking-wider block">
+                        Assigned Worker
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${worker.badgeBg} ${worker.badgeText}`}>
+                        {worker.section}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-base font-extrabold text-emerald-950 block">
+                        {worker.name}
+                      </span>
+                      <span className="text-xs text-slate-600 font-medium block mt-0.5">
+                        {worker.designation}
+                      </span>
+                    </div>
+                    <div className="pt-2 border-t border-slate-100 flex flex-col gap-1 text-xs text-slate-600 font-mono">
+                      <a
+                        href={`tel:${worker.phone.replace(/\s+/g, '')}`}
+                        className="inline-flex items-center gap-1.5 text-emerald-700 hover:underline font-semibold"
+                      >
+                        <Phone className="w-3.5 h-3.5" />
+                        <span>{worker.phone}</span>
+                      </a>
+                      <a
+                        href={`mailto:${worker.email}`}
+                        className="inline-flex items-center gap-1.5 text-slate-500 hover:text-slate-800 truncate"
+                      >
+                        <Mail className="w-3.5 h-3.5" />
+                        <span className="truncate">{worker.email}</span>
+                      </a>
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="bg-white rounded-2xl border border-[#DDE7E1] p-4 shadow-[0_2px_8px_rgba(15,60,33,0.02)]">
+                  <span className="text-xs font-bold text-emerald-800/80 uppercase tracking-wider block">
+                    Assigned Staff
+                  </span>
+                  <span className="text-base font-extrabold text-emerald-950 mt-1 block truncate">
+                    {staffName || 'Unassigned'}
+                  </span>
+                </div>
+              );
+            })()}
 
             <div className="bg-white rounded-2xl border border-[#DDE7E1] p-4 shadow-[0_2px_8px_rgba(15,60,33,0.02)]">
               <span className="text-xs font-bold text-emerald-800/80 uppercase tracking-wider block">Logged Date</span>
@@ -706,21 +799,62 @@ export default function IssueDetailPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-emerald-950 uppercase tracking-wider mb-2">
-              Maintenance Staff
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-bold text-emerald-950 uppercase tracking-wider">
+                Assigned College Worker (12 Registered)
+              </label>
+              <span className="text-xs text-slate-500 font-medium">3 in each section</span>
+            </div>
             <select
               value={selectedStaffId}
-              onChange={(e) => setSelectedStaffId(e.target.value)}
-              className="w-full px-4 py-3 text-base bg-white border border-[#DDE7E1] rounded-2xl text-emerald-950 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 outline-none font-medium"
+              onChange={(e) => {
+                const workerId = e.target.value;
+                setSelectedStaffId(workerId);
+                const worker = allWorkers.find((w) => w.id === workerId);
+                if (worker) {
+                  setSelectedDeptId(worker.departmentId);
+                }
+              }}
+              className="w-full px-4 py-3 text-sm bg-white border border-[#DDE7E1] rounded-2xl text-emerald-950 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 outline-none font-medium cursor-pointer"
             >
-              <option value="">Select Staff Member</option>
-              {maintenanceStaff.map((st: any) => (
-                <option key={st.id} value={st.id}>
-                  {st.name} ({st.email})
-                </option>
-              ))}
+              <option value="">Select College Worker...</option>
+              {WORKER_SECTIONS.map((sec) => {
+                const secWorkers = allWorkers.filter((w) => w.departmentId === sec.id);
+                if (secWorkers.length === 0) return null;
+                return (
+                  <optgroup key={sec.id} label={`${sec.icon} ${sec.name}`}>
+                    {secWorkers.map((w) => (
+                      <option key={w.id} value={w.id}>
+                        {w.name} – {w.designation} ({w.phone})
+                      </option>
+                    ))}
+                  </optgroup>
+                );
+              })}
             </select>
+
+            {/* Selected Worker Preview */}
+            {(() => {
+              const worker = allWorkers.find((w) => w.id === selectedStaffId);
+              if (!worker) return null;
+              return (
+                <div className="mt-3 p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
+                  <div>
+                    <div className="flex items-center gap-1.5 font-bold text-emerald-950">
+                      <span>{worker.name}</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                        {worker.section}
+                      </span>
+                    </div>
+                    <p className="text-slate-600 font-medium text-[11px] mt-0.5">{worker.designation}</p>
+                    <p className="text-emerald-700 font-mono text-[11px] mt-0.5">📞 {worker.phone}</p>
+                  </div>
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-1 rounded-md">
+                    Ready to Dispatch
+                  </span>
+                </div>
+              );
+            })()}
           </div>
 
           <div className="pt-5 border-t border-[#DDE7E1] flex items-center justify-end gap-3.5">
