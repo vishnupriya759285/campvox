@@ -46,7 +46,7 @@ export function BrandLogo({
         </span>
         {showTagline && (
           <span className={`text-[11px] font-semibold tracking-normal mt-1 ${inverse ? 'text-white/75' : 'text-[#526F89]'}`}>
-            Making Everyday Campus Life Easier
+            Your Campus. Better, Every Day.
           </span>
         )}
       </div>

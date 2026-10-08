@@ -35,9 +35,20 @@ export function AppSidebar({ onCloseMobile }: AppSidebarProps) {
   });
   const unreadCount = data?.unreadNotificationCount ?? 2;
 
+  const roleUpper = (user?.role || '').toUpperCase();
+  const isAdminUser = isAdmin || roleUpper === 'ADMIN' || user?.email?.toLowerCase().includes('admin');
+
   const navItems = [
-    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { label: 'My Issues', href: '/issues', icon: ClipboardList },
+    {
+      label: isAdminUser ? 'Admin Dashboard' : 'Dashboard',
+      href: isAdminUser ? '/admin' : '/dashboard',
+      icon: LayoutDashboard,
+    },
+    {
+      label: isAdminUser ? 'All Campus Issues' : 'My Issues',
+      href: '/issues',
+      icon: ClipboardList,
+    },
     { label: 'Report an Issue', href: '/issues/new', icon: PlusCircle },
     { label: 'Notifications', href: '/notifications', icon: Bell, badge: unreadCount },
   ];
@@ -77,7 +88,9 @@ export function AppSidebar({ onCloseMobile }: AppSidebarProps) {
         <nav className="space-y-1.5 mt-2">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href;
+            const isActive = item.href === '/admin'
+              ? pathname.startsWith('/admin')
+              : pathname === item.href;
 
             return (
               <Link
@@ -159,8 +172,8 @@ export function AppSidebar({ onCloseMobile }: AppSidebarProps) {
               className="w-6 h-6 object-contain shrink-0 opacity-90"
             />
             <div className="flex flex-col text-[11px] leading-snug font-medium text-[#64748B]">
-              <span>Making Everyday</span>
-              <span>Campus Life Easier</span>
+              <span>Your Campus.</span>
+              <span>Better, Every Day.</span>
             </div>
           </div>
 

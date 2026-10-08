@@ -172,20 +172,70 @@ export default function StudentDashboardPage() {
   const { user } = useAuth();
   const { data } = useQuery(GET_MY_ISSUES, { pollInterval: 12000 });
 
+  const [localIssues, setLocalIssues] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = JSON.parse(localStorage.getItem('campvox_custom_issues') || '[]');
+        setLocalIssues(stored);
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
+
+  const formattedLocalIssues: IssueItem[] = React.useMemo(() => {
+    return localIssues.map((issue: any) => {
+      const getCategoryIcon = (cat: string) => {
+        const upper = (cat || '').toUpperCase();
+        if (upper.includes('ELEC')) return '⚡';
+        if (upper.includes('PLUMB')) return '🔧';
+        if (upper.includes('WIFI') || upper.includes('NET')) return '📶';
+        return '📋';
+      };
+
+      const getStatusDisplay = (st: string): 'Open' | 'In Progress' | 'Resolved' => {
+        const upper = (st || '').toUpperCase();
+        if (upper === 'IN_PROGRESS') return 'In Progress';
+        if (upper === 'RESOLVED' || upper === 'VERIFIED') return 'Resolved';
+        return 'Open';
+      };
+
+      return {
+        id: issue.id,
+        title: issue.title,
+        category: issue.category ? issue.category.charAt(0) + issue.category.slice(1).toLowerCase() : 'General',
+        categoryIcon: getCategoryIcon(issue.category),
+        location: issue.location || 'Campus',
+        date: 'Today',
+        department: issue.assignedDepartment?.name || 'Campus Operations',
+        status: getStatusDisplay(issue.status),
+        image: issue.images?.[0]?.url || issue.imageUrls?.[0] || '/brand/thumb-corridor-light.png',
+      };
+    });
+  }, [localIssues]);
+
+  const displayedIssues = React.useMemo(() => {
+    const existingIds = new Set(formattedLocalIssues.map(i => i.id));
+    const extraDefaults = DEFAULT_ISSUES.filter(i => !existingIds.has(i.id));
+    return [...formattedLocalIssues, ...extraDefaults];
+  }, [formattedLocalIssues]);
+
   const displayName = user?.name ? user.name.split(' ')[0] : 'Alex';
 
   // Calculate dynamic stats from API or fallback to reference defaults
   const userIssues = data?.myIssues || [];
-  const totalCount = userIssues.length > 0 ? userIssues.length : 12;
+  const totalCount = userIssues.length > 0 ? userIssues.length + formattedLocalIssues.length : 12 + formattedLocalIssues.length;
   const openCount = userIssues.length > 0
-    ? userIssues.filter((i: any) => ['REPORTED', 'ASSIGNED', 'REOPENED'].includes(i.status)).length
-    : 3;
+    ? userIssues.filter((i: any) => ['REPORTED', 'ASSIGNED', 'REOPENED'].includes(i.status)).length + formattedLocalIssues.filter(i => i.status === 'Open').length
+    : 3 + formattedLocalIssues.filter(i => i.status === 'Open').length;
   const inProgressCount = userIssues.length > 0
-    ? userIssues.filter((i: any) => i.status === 'IN_PROGRESS').length
-    : 4;
+    ? userIssues.filter((i: any) => i.status === 'IN_PROGRESS').length + formattedLocalIssues.filter(i => i.status === 'In Progress').length
+    : 4 + formattedLocalIssues.filter(i => i.status === 'In Progress').length;
   const resolvedCount = userIssues.length > 0
-    ? userIssues.filter((i: any) => ['RESOLVED', 'VERIFIED'].includes(i.status)).length
-    : 5;
+    ? userIssues.filter((i: any) => ['RESOLVED', 'VERIFIED'].includes(i.status)).length + formattedLocalIssues.filter(i => i.status === 'Resolved').length
+    : 5 + formattedLocalIssues.filter(i => i.status === 'Resolved').length;
 
   return (
     <div className="space-y-6 pb-8">
@@ -304,10 +354,10 @@ export default function StudentDashboardPage() {
 
             {/* List of issues */}
             <div className="divide-y divide-[#EDF4F6]">
-              {DEFAULT_ISSUES.map((issue) => (
+              {displayedIssues.slice(0, 5).map((issue) => (
                 <Link
                   key={issue.id}
-                  href={`/issues`}
+                  href={`/issues/${issue.id}`}
                   className="py-3.5 flex items-center justify-between gap-3 group hover:bg-[#F8FCFA] px-2 -mx-2 rounded-xl transition-colors"
                 >
                   <div className="flex items-center gap-3.5 min-w-0">

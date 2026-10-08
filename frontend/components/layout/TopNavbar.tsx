@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Search, Bell, Menu, ChevronDown, LogOut } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useQuery } from '@apollo/client';
@@ -16,6 +16,7 @@ interface TopNavbarProps {
 export function TopNavbar({ onToggleMobileMenu }: TopNavbarProps) {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState('');
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
@@ -31,13 +32,30 @@ export function TopNavbar({ onToggleMobileMenu }: TopNavbarProps) {
     }
   };
 
-  // Determine user display names and academic info matching the reference mockup
-  const displayName = user?.name ? user.name.split(' ')[0] : 'Alex';
-  const roleOrYear = user?.role === 'ADMIN'
+  const roleUpper = (user?.role || '').toUpperCase();
+  const isAdminUser = roleUpper === 'ADMIN' || user?.email?.toLowerCase().includes('admin');
+  const isMaintUser = roleUpper === 'MAINTENANCE' || user?.email?.toLowerCase().includes('maint');
+
+  const displayName = user?.name
+    ? (user.name.toLowerCase() === 'admin' ? 'Admin' : user.name.split(' ')[0])
+    : (isAdminUser ? 'Admin' : 'Alex');
+  const roleOrYear = isAdminUser
     ? 'Campus Administrator'
-    : user?.role === 'MAINTENANCE'
+    : isMaintUser
     ? 'Facility Operations'
     : 'B.Tech CSE • 3rd Year';
+
+  const getPageTitle = () => {
+    if (pathname.startsWith('/admin')) return 'Admin Dashboard';
+    if (pathname.startsWith('/maintenance')) return 'Maintenance Operations';
+    if (pathname.startsWith('/issues/new')) return 'Report Campus Issue';
+    if (pathname.startsWith('/issues/')) return 'Issue Details';
+    if (pathname.startsWith('/issues')) return 'Campus Issues';
+    if (pathname.startsWith('/notifications')) return 'Campus Notifications';
+    if (isAdminUser) return 'Admin Dashboard';
+    if (isMaintUser) return 'Maintenance Operations';
+    return 'Student Dashboard';
+  };
 
   return (
     <header className="h-16 bg-white border-b border-[#E6EFF2] px-4 sm:px-7 flex items-center justify-between gap-4 sticky top-0 z-30">
@@ -53,7 +71,7 @@ export function TopNavbar({ onToggleMobileMenu }: TopNavbarProps) {
 
         {/* Page Title */}
         <h1 className="text-base sm:text-lg font-bold text-[#123650] tracking-tight whitespace-nowrap">
-          Student Dashboard
+          {getPageTitle()}
         </h1>
       </div>
 

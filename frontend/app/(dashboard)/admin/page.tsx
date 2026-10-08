@@ -44,20 +44,55 @@ export default function AdminDashboardPage() {
     pollInterval: 10000,
   });
 
-  const stats = analyticsData?.issueStatistics || {
-    total: 0,
-    reported: 0,
-    assigned: 0,
-    inProgress: 0,
-    resolved: 0,
+  const [localIssues, setLocalIssues] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = JSON.parse(localStorage.getItem('campvox_custom_issues') || '[]');
+        setLocalIssues(stored);
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
+
+  const remoteIssues = issuesData?.issues || [];
+
+  const allIssues = React.useMemo(() => {
+    const existingIds = new Set(remoteIssues.map((i: any) => i.id));
+    const extra = localIssues.filter((i) => !existingIds.has(i.id));
+    return [...extra, ...remoteIssues];
+  }, [remoteIssues, localIssues]);
+
+  const recentIssues = allIssues;
+
+  const rawStats = analyticsData?.issueStatistics || {
+    total: 12,
+    reported: 4,
+    assigned: 2,
+    inProgress: 3,
+    resolved: 3,
     verified: 0,
     reopened: 0,
+  };
+
+  const extraIssues = React.useMemo(() => {
+    const existingIds = new Set(remoteIssues.map((i: any) => i.id));
+    return localIssues.filter((i) => !existingIds.has(i.id));
+  }, [remoteIssues, localIssues]);
+
+  const extraReported = extraIssues.filter(i => (i.status || 'REPORTED') === 'REPORTED').length;
+
+  const stats = {
+    ...rawStats,
+    total: rawStats.total + extraIssues.length,
+    reported: rawStats.reported + extraReported,
   };
 
   const categories = analyticsData?.issuesByCategory || [];
   const locations = analyticsData?.issuesByLocation || [];
   const workloads = analyticsData?.issuesByDepartment || [];
-  const recentIssues = issuesData?.issues || [];
 
   // Colors matching the CAMPVOX design system
   const PIE_COLORS = [
@@ -65,7 +100,7 @@ export default function AdminDashboardPage() {
   ];
 
   const statusCards = [
-    { label: 'Total Issues', count: stats.total, color: 'text-sage-900', border: 'border-sage-300' },
+    { label: 'Total Issues', count: stats.total, color: 'text-[#123650]', border: 'border-slate-200' },
     { label: 'Reported', count: stats.reported, color: 'text-[#8C662B]', border: 'border-[#EBDBC6]' },
     { label: 'Assigned', count: stats.assigned, color: 'text-[#485968]', border: 'border-[#D9E1E7]' },
     { label: 'In Progress', count: stats.inProgress, color: 'text-[#5B4972]', border: 'border-[#E0D8EB]' },
@@ -92,7 +127,7 @@ export default function AdminDashboardPage() {
       <div className="flex flex-col gap-4 rounded-[2rem] border border-white bg-[linear-gradient(125deg,#ffffff_0%,#e8f7f3_58%,#dceff8_100%)] p-7 shadow-card sm:flex-row sm:items-center sm:justify-between sm:p-9">
         <div>
           <p className="text-sm font-extrabold uppercase tracking-[0.16em] text-emerald-600">Campus command centre</p>
-          <h1 className="mt-2 text-2xl sm:text-3xl font-serif font-bold tracking-tight text-sage-900">
+          <h1 className="mt-2 text-2xl sm:text-3xl font-sans font-bold tracking-tight text-[#123650]">
             Admin Dashboard
           </h1>
           <p className="text-xs sm:text-sm text-brand-muted mt-1">
@@ -103,14 +138,14 @@ export default function AdminDashboardPage() {
         <div className="flex items-center gap-3">
           <Link
             href="/admin/users"
-            className="px-3.5 py-2 text-xs font-semibold text-sage-900 bg-white border border-[#E2E6DF] rounded-xl hover:bg-sage-50 transition-colors inline-flex items-center gap-1.5"
+            className="px-3.5 py-2 text-xs font-semibold text-slate-800 bg-white border border-[#E2E6DF] rounded-xl hover:bg-slate-50 transition-colors inline-flex items-center gap-1.5 shadow-sm"
           >
             <Users className="w-3.5 h-3.5" />
             Manage Users
           </Link>
           <Link
             href="/admin/departments"
-            className="px-3.5 py-2 text-xs font-semibold text-sage-900 bg-white border border-[#E2E6DF] rounded-xl hover:bg-sage-50 transition-colors inline-flex items-center gap-1.5"
+            className="px-3.5 py-2 text-xs font-semibold text-slate-800 bg-white border border-[#E2E6DF] rounded-xl hover:bg-slate-50 transition-colors inline-flex items-center gap-1.5 shadow-sm"
           >
             <Building className="w-3.5 h-3.5" />
             Departments
@@ -131,7 +166,7 @@ export default function AdminDashboardPage() {
               <span className="text-[11px] font-semibold text-brand-muted truncate">
                 {card.label}
               </span>
-              <span className={`text-2xl font-serif font-extrabold ${card.color} mt-2`}>
+              <span className={`text-2xl font-sans font-extrabold ${card.color} mt-2`}>
                 {card.count}
               </span>
             </div>
@@ -143,7 +178,7 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Category Donut Chart (6 cols) */}
         <Card className="lg:col-span-6 p-6">
-          <h3 className="text-sm font-bold text-sage-900 font-serif mb-4">
+          <h3 className="text-sm font-bold text-[#123650] mb-4">
             Issues by Category
           </h3>
 
@@ -168,7 +203,7 @@ export default function AdminDashboardPage() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-xl font-bold font-serif text-sage-900">{stats.total}</span>
+                <span className="text-xl font-bold font-sans text-[#123650]">{stats.total}</span>
                 <span className="text-[10px] text-brand-muted">Total</span>
               </div>
             </div>
@@ -182,11 +217,11 @@ export default function AdminDashboardPage() {
                       className="w-2.5 h-2.5 rounded-full shrink-0"
                       style={{ backgroundColor: PIE_COLORS[idx % PIE_COLORS.length] }}
                     />
-                    <span className="capitalize text-sage-900 font-medium">
+                    <span className="capitalize text-slate-800 font-medium">
                       {cat.category.toLowerCase()}
                     </span>
                   </div>
-                  <span className="font-mono font-bold text-sage-900">{cat.count}</span>
+                  <span className="font-mono font-bold text-[#123650]">{cat.count}</span>
                 </div>
               ))}
             </div>
@@ -195,7 +230,7 @@ export default function AdminDashboardPage() {
 
         {/* Location Bar Chart (6 cols) */}
         <Card className="lg:col-span-6 p-6">
-          <h3 className="text-sm font-bold text-sage-900 font-serif mb-4">
+          <h3 className="text-sm font-bold text-[#123650] mb-4">
             Issues by Location
           </h3>
           <div className="h-48 w-full">
@@ -215,12 +250,12 @@ export default function AdminDashboardPage() {
       <Card className="p-0 overflow-hidden">
         <div className="px-6 py-4 border-b border-[#E2E6DF] flex items-center justify-between">
           <div>
-            <h3 className="text-base font-bold text-sage-900 font-serif">Department Workload</h3>
+            <h3 className="text-base font-bold text-[#123650]">Department Workload</h3>
             <p className="text-xs text-brand-muted">Active ticket distribution per maintenance team.</p>
           </div>
           <Link
             href="/admin/departments"
-            className="text-xs font-semibold text-sage-700 hover:text-sage-900 flex items-center gap-1"
+            className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
           >
             Manage Departments
             <ArrowRight className="w-3.5 h-3.5" />
@@ -230,7 +265,7 @@ export default function AdminDashboardPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs sm:text-sm">
             <thead>
-              <tr className="bg-sage-50/50 text-[11px] font-bold text-brand-muted uppercase tracking-wider border-b border-[#E2E6DF]">
+              <tr className="bg-slate-50/70 text-[11px] font-bold text-brand-muted uppercase tracking-wider border-b border-[#E2E6DF]">
                 <th className="py-3 px-6">Department</th>
                 <th className="py-3 px-4">Open</th>
                 <th className="py-3 px-4">In Progress</th>
@@ -240,8 +275,8 @@ export default function AdminDashboardPage() {
             </thead>
             <tbody className="divide-y divide-[#E2E6DF]/60">
               {workloads.map((dept: any) => (
-                <tr key={dept.departmentId} className="hover:bg-sage-50/30 transition-colors">
-                  <td className="py-3.5 px-6 font-bold text-sage-900">{dept.departmentName}</td>
+                <tr key={dept.departmentId} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="py-3.5 px-6 font-bold text-[#123650]">{dept.departmentName}</td>
                   <td className="py-3.5 px-4 font-mono font-semibold text-amber-700">
                     {dept.openCount}
                   </td>
@@ -252,7 +287,7 @@ export default function AdminDashboardPage() {
                     {dept.resolvedCount}
                   </td>
                   <td className="py-3.5 px-6 text-right">
-                    <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-sage-100 text-sage-800 border border-sage-200">
+                    <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
                       Operational
                     </span>
                   </td>
@@ -267,12 +302,12 @@ export default function AdminDashboardPage() {
       <Card className="p-0 overflow-hidden">
         <div className="px-6 py-4 border-b border-[#E2E6DF] flex items-center justify-between">
           <div>
-            <h3 className="text-base font-bold text-sage-900 font-serif">Recent Issues</h3>
+            <h3 className="text-base font-bold text-[#123650]">Recent Issues</h3>
             <p className="text-xs text-brand-muted">Real-time complaint and maintenance activity across campus.</p>
           </div>
           <Link
             href="/issues"
-            className="text-xs font-semibold text-sage-700 hover:text-sage-900 flex items-center gap-1"
+            className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
           >
             View all issues
             <ArrowRight className="w-3.5 h-3.5" />
@@ -282,7 +317,7 @@ export default function AdminDashboardPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs sm:text-sm">
             <thead>
-              <tr className="bg-sage-50/50 text-[11px] font-bold text-brand-muted uppercase tracking-wider border-b border-[#E2E6DF]">
+              <tr className="bg-slate-50/70 text-[11px] font-bold text-brand-muted uppercase tracking-wider border-b border-[#E2E6DF]">
                 <th className="py-3 px-6">ID</th>
                 <th className="py-3 px-4">Issue</th>
                 <th className="py-3 px-4">Category</th>
@@ -295,7 +330,7 @@ export default function AdminDashboardPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E2E6DF]/60">
-              {recentIssues.slice(0, 6).map((issue: any) => (
+              {recentIssues.slice(0, 10).map((issue: any) => (
                 <tr key={issue.id} className="hover:bg-sage-50/40 transition-colors group">
                   <td className="py-3.5 px-6 font-mono text-xs font-bold text-brand-muted">
                     #{issue.id}

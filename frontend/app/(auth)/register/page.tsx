@@ -504,7 +504,7 @@ export default function RegisterPage() {
         {/* Bottom Bar: Clean Brandline */}
         <footer className="pt-2 pb-2 text-center sm:text-left">
           <p className="text-xs font-semibold text-white/90 drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">
-            CAMPVOX · Making Everyday Campus Life Easier
+            CAMPVOX · Your Campus. Better, Every Day.
           </p>
         </footer>
       </div>

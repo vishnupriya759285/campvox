@@ -4,9 +4,9 @@ import { ApolloAppProvider } from '@/lib/apollo-provider';
 import { AuthProvider } from '@/lib/auth-context';
 
 export const metadata: Metadata = {
-  title: 'CAMPVOX | Making Everyday Campus Life Easier',
+  title: 'CAMPVOX | Your Campus. Better, Every Day.',
   description:
-    'CAMPVOX makes everyday campus life easier by giving students, staff, and campus teams one clear place to report, track, and resolve concerns.',
+    'CAMPVOX gives students, staff, and campus teams one clear place to report, track, and resolve concerns. Your Campus. Better, Every Day.',
 };
 
 export default function RootLayout({

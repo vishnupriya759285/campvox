@@ -165,7 +165,31 @@ export default function ReportIssuePage() {
       });
 
       if (data?.createIssue) {
-        setCreatedIssueId(data.createIssue.id);
+        const created = data.createIssue;
+        const newLocalIssue = {
+          id: created.id,
+          title: created.title || title.trim(),
+          category: created.category || category,
+          location: created.location || location.trim(),
+          priority: created.priority || priority,
+          description: description.trim(),
+          imageUrls: uploadedUrl ? [uploadedUrl] : imageBase64 ? [imageBase64] : [],
+          images: uploadedUrl ? [{ id: `img-${created.id}`, url: uploadedUrl }] : imageBase64 ? [{ id: `img-${created.id}`, url: imageBase64 }] : [],
+          status: created.status || 'REPORTED',
+          createdAt: created.createdAt || new Date().toISOString(),
+          assignedDepartment: null,
+          assignedStaff: null,
+        };
+        if (typeof window !== 'undefined') {
+          try {
+            const stored = JSON.parse(localStorage.getItem('campvox_custom_issues') || '[]');
+            const filtered = stored.filter((i: any) => i.id !== created.id);
+            localStorage.setItem('campvox_custom_issues', JSON.stringify([newLocalIssue, ...filtered]));
+          } catch {
+            // ignore
+          }
+        }
+        setCreatedIssueId(created.id);
       }
     } catch (err: any) {
       console.warn('Network issue submit fallback triggered:', err);

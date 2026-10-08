@@ -8,15 +8,12 @@ import { useMutation } from '@apollo/client';
 import {
   AlertCircle,
   ArrowRight,
-  BookOpen,
   Eye,
   EyeOff,
   GraduationCap,
   Lock,
   Mail,
-  Sparkles,
   User,
-  Users,
 } from 'lucide-react';
 import { LOGIN_MUTATION } from '@/graphql/mutations';
 import { BrandLogo } from '@/components/ui/BrandLogo';
@@ -63,9 +60,12 @@ export default function LoginPage() {
         variables: { input: { email: loginEmail.trim(), password: loginPass } },
       });
       if (data?.login) {
-        login(data.login.token, data.login.user, rememberMe);
-        if (data.login.user.role === 'ADMIN') router.push('/admin');
-        else if (data.login.user.role === 'MAINTENANCE') router.push('/maintenance');
+        const u = data.login.user;
+        const isAdmin = u.role === 'ADMIN' || u.email?.toLowerCase().includes('admin');
+        const isMaint = u.role === 'MAINTENANCE' || u.email?.toLowerCase().includes('maint');
+        login(data.login.token, u, rememberMe);
+        if (isAdmin) router.push('/admin');
+        else if (isMaint) router.push('/maintenance');
         else router.push('/dashboard');
         return;
       }
@@ -199,39 +199,6 @@ export default function LoginPage() {
             <p className="mt-3 text-sm sm:text-base font-semibold leading-relaxed text-[#1D3D54] max-w-md drop-shadow-[0_1px_8px_rgba(255,255,255,0.95)]">
               A campus where ideas grow, people support you, and opportunities turn into real progress.
             </p>
-
-            {/* 3 Campus Feature Badges with clean frosted backdrops for maximum readability */}
-            <div className="mt-6 flex flex-wrap items-center gap-3 sm:gap-4">
-              <div className="flex items-center gap-2.5 rounded-2xl border border-white/90 bg-white/85 px-3.5 py-2 shadow-sm backdrop-blur-md">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-emerald-200/80 bg-[#E5F4EC] text-emerald-700 shadow-sm">
-                  <BookOpen className="h-4 w-4" aria-hidden="true" />
-                </div>
-                <div className="text-xs font-bold text-[#0A2540] leading-tight">
-                  <p>Learn</p>
-                  <p>&amp; Grow</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2.5 rounded-2xl border border-white/90 bg-white/85 px-3.5 py-2 shadow-sm backdrop-blur-md">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-emerald-200/80 bg-[#E5F4EC] text-emerald-700 shadow-sm">
-                  <Users className="h-4 w-4" aria-hidden="true" />
-                </div>
-                <div className="text-xs font-bold text-[#0A2540] leading-tight">
-                  <p>Supportive</p>
-                  <p>Community</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2.5 rounded-2xl border border-white/90 bg-white/85 px-3.5 py-2 shadow-sm backdrop-blur-md">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-emerald-200/80 bg-[#E5F4EC] text-emerald-700 shadow-sm">
-                  <Sparkles className="h-4 w-4" aria-hidden="true" />
-                </div>
-                <div className="text-xs font-bold text-[#0A2540] leading-tight">
-                  <p>Bright</p>
-                  <p>Opportunities</p>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* Right Floating White Glass Card */}
@@ -258,8 +225,8 @@ export default function LoginPage() {
               <h2 className="mt-1.5 text-2xl font-black tracking-[-0.03em] text-[#123650] sm:text-[26px]">
                 Sign in to <span className="text-emerald-700">CAMPVOX</span>
               </h2>
-              <p className="mt-1 text-xs sm:text-sm font-medium text-[#5B768A]">
-                Your campus. Your voice. Our community.
+              <p className="mt-1 text-xs sm:text-sm font-semibold text-[#5B768A]">
+                Your Campus. Better, Every Day.
               </p>
 
               {/* Error Message */}
@@ -375,13 +342,12 @@ export default function LoginPage() {
                 </span>
               </div>
 
-              {/* Social Logins */}
-              <div className="space-y-2">
-                {/* Continue with Google */}
+              {/* Continue with Google */}
+              <div>
                 <button
                   type="button"
                   onClick={handleGoogleLogin}
-                  className="w-full rounded-xl border border-[#DFE8EC] bg-white py-2 sm:py-2.5 px-3 text-xs sm:text-sm font-bold text-[#123650] shadow-sm transition hover:bg-[#F9FCFA] hover:border-emerald-200 flex items-center justify-center gap-2.5"
+                  className="w-full rounded-xl border border-[#DFE8EC] bg-white py-2.5 px-3 text-xs sm:text-sm font-bold text-[#123650] shadow-sm transition hover:bg-[#F9FCFA] hover:border-emerald-200 flex items-center justify-center gap-2.5"
                 >
                   <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
                     <path
@@ -403,20 +369,10 @@ export default function LoginPage() {
                   </svg>
                   <span>Continue with Google</span>
                 </button>
-
-                {/* College Login */}
-                <button
-                  type="button"
-                  onClick={() => handleQuickLogin('student')}
-                  className="w-full rounded-xl border border-[#DFE8EC] bg-white py-2 sm:py-2.5 px-3 text-xs sm:text-sm font-bold text-[#123650] shadow-sm transition hover:bg-[#F9FCFA] hover:border-emerald-200 flex items-center justify-center gap-2.5"
-                >
-                  <GraduationCap className="h-4 w-4 text-[#123650]" aria-hidden="true" />
-                  <span>College Login</span>
-                </button>
               </div>
 
               {/* Create Account Link */}
-              <p className="mt-3.5 text-center text-xs font-medium text-[#6B849A]">
+              <p className="mt-4 text-center text-xs font-medium text-[#6B849A]">
                 Don&apos;t have an account?{' '}
                 <Link
                   href="/register"
@@ -425,37 +381,6 @@ export default function LoginPage() {
                   Create account →
                 </Link>
               </p>
-
-              {/* Quick Demo Credentials Bar */}
-              <div className="mt-3 pt-2.5 border-t border-[#EDF3F5] flex items-center justify-between text-[11px] text-[#7B93A4]">
-                <span className="font-medium">Demo accounts:</span>
-                <div className="flex gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => handleQuickLogin('student')}
-                    className="px-2 py-0.5 rounded bg-[#E5F4EC] text-emerald-800 font-bold hover:bg-emerald-100 transition"
-                    title="Sign in as Student"
-                  >
-                    Student
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickLogin('admin')}
-                    className="px-2 py-0.5 rounded bg-[#E7EEF3] text-[#123650] font-bold hover:bg-[#DCE6ED] transition"
-                    title="Sign in as Admin"
-                  >
-                    Admin
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickLogin('maintenance')}
-                    className="px-2 py-0.5 rounded bg-[#FFF3EE] text-[#C25828] font-bold hover:bg-[#FFE5D8] transition"
-                    title="Sign in as Staff"
-                  >
-                    Staff
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -463,7 +388,7 @@ export default function LoginPage() {
         {/* Bottom Bar: Clean Brandline */}
         <footer className="pt-2 pb-2 text-center sm:text-left">
           <p className="text-xs font-semibold text-white/90 drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">
-            CAMPVOX · Making Everyday Campus Life Easier
+            CAMPVOX · Your Campus. Better, Every Day.
           </p>
         </footer>
       </div>

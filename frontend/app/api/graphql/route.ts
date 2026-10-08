@@ -347,13 +347,17 @@ export async function POST(req: NextRequest) {
 
     // Handle Login / Register / Me
     if (op.includes('login') || op.includes('register') || q.includes('login(') || q.includes('register(')) {
-      const email = variables?.input?.email || 'student@campvox.edu';
-      const name = variables?.input?.name || email.split('@')[0];
+      const email = (variables?.input?.email || 'student@campvox.edu').trim().toLowerCase();
+      const rawName = variables?.input?.name || email.split('@')[0];
+      const isAdm = email.includes('admin');
+      const isMnt = email.includes('maint');
+      const role = isAdm ? 'ADMIN' : isMnt ? 'MAINTENANCE' : 'STUDENT';
+      const name = isAdm ? (rawName === 'admin' ? 'Admin' : rawName) : rawName;
       const user = {
-        id: 'usr-student',
+        id: isAdm ? 'usr-admin' : isMnt ? 'usr-maint' : 'usr-student',
         name,
         email,
-        role: 'STUDENT',
+        role,
         departmentId: null,
         department: null,
       };
@@ -372,13 +376,15 @@ export async function POST(req: NextRequest) {
     }
 
     if (op.includes('me') || q.includes('me {')) {
+      const authHeader = req.headers.get('authorization') || '';
+      const isAdmToken = authHeader.includes('admin');
       return NextResponse.json({
         data: {
           me: {
-            id: 'usr-student',
-            name: 'Alex Rivera',
-            email: 'student@campvox.edu',
-            role: 'STUDENT',
+            id: isAdmToken ? 'usr-admin' : 'usr-student',
+            name: isAdmToken ? 'Admin' : 'Alex Rivera',
+            email: isAdmToken ? 'admin@fixmycampus.edu' : 'student@campvox.edu',
+            role: isAdmToken ? 'ADMIN' : 'STUDENT',
             departmentId: null,
             department: null,
           },
