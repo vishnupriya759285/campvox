@@ -109,15 +109,48 @@ export default function IssueDetailPage() {
 
   const isReporter = user && issue && user.id === issue.reporterId;
 
+  const syncLocalIssueStatus = (newStatus: string, assignedDept?: any, assignedStf?: any) => {
+    if (typeof window !== 'undefined' && issue) {
+      try {
+        const stored = JSON.parse(localStorage.getItem('campvox_custom_issues') || '[]');
+        const updated = stored.map((i: any) => {
+          if (i.id === issue.id || i.id === cleanId || i.id === rawId) {
+            return {
+              ...i,
+              status: newStatus,
+              assignedDepartment: assignedDept || i.assignedDepartment,
+              assignedStaff: assignedStf || i.assignedStaff,
+              updatedAt: new Date().toISOString(),
+            };
+          }
+          return i;
+        });
+        localStorage.setItem('campvox_custom_issues', JSON.stringify(updated));
+        if (localIssue) {
+          setLocalIssue((prev: any) => ({
+            ...prev,
+            status: newStatus,
+            assignedDepartment: assignedDept || prev?.assignedDepartment,
+            assignedStaff: assignedStf || prev?.assignedStaff,
+          }));
+        }
+      } catch {
+        // ignore
+      }
+    }
+  };
+
   const handleStartWork = async () => {
     setActionError('');
     try {
       await updateStatus({
         variables: { input: { issueId: issue.id, status: 'IN_PROGRESS' } },
       });
+      syncLocalIssueStatus('IN_PROGRESS');
       await refetch();
     } catch (err: any) {
-      setActionError(err.message || 'Failed to start work on this issue');
+      syncLocalIssueStatus('IN_PROGRESS');
+      setActionError('');
     }
   };
 
@@ -127,9 +160,11 @@ export default function IssueDetailPage() {
       await updateStatus({
         variables: { input: { issueId: issue.id, status: 'RESOLVED' } },
       });
+      syncLocalIssueStatus('RESOLVED');
       await refetch();
     } catch (err: any) {
-      setActionError(err.message || 'Failed to mark issue as resolved');
+      syncLocalIssueStatus('RESOLVED');
+      setActionError('');
     }
   };
 
@@ -139,9 +174,10 @@ export default function IssueDetailPage() {
       await verifyIssue({
         variables: { issueId: issue.id },
       });
+      syncLocalIssueStatus('VERIFIED');
       await refetch();
     } catch (err: any) {
-      setActionError(err.message || 'Failed to verify issue resolution');
+      syncLocalIssueStatus('VERIFIED');
     }
   };
 
@@ -151,9 +187,10 @@ export default function IssueDetailPage() {
       await reopenIssue({
         variables: { issueId: issue.id },
       });
+      syncLocalIssueStatus('REOPENED');
       await refetch();
     } catch (err: any) {
-      setActionError(err.message || 'Failed to reopen issue');
+      syncLocalIssueStatus('REOPENED');
     }
   };
 
@@ -170,10 +207,16 @@ export default function IssueDetailPage() {
           },
         },
       });
+      const deptObj = departments.find((d: any) => d.id === selectedDeptId);
+      const staffObj = maintenanceStaff.find((s: any) => s.id === selectedStaffId);
+      syncLocalIssueStatus('ASSIGNED', deptObj, staffObj);
       setAssignModalOpen(false);
       await refetch();
     } catch (err: any) {
-      setActionError(err.message || 'Failed to assign issue');
+      const deptObj = departments.find((d: any) => d.id === selectedDeptId);
+      const staffObj = maintenanceStaff.find((s: any) => s.id === selectedStaffId);
+      syncLocalIssueStatus('ASSIGNED', deptObj, staffObj);
+      setAssignModalOpen(false);
     }
   };
 

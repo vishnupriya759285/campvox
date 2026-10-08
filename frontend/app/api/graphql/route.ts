@@ -321,6 +321,39 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // Handle AssignIssue
+    if (op.includes('assignissue') || op.includes('assign') || q.includes('assignissue')) {
+      const { issueId, departmentId, staffId } = variables?.input || {};
+      const cleanId = (issueId || '').toString().trim().replace(/^#/, '');
+      const dept = DEPARTMENTS.find((d) => d.id === departmentId);
+      const target = IN_MEMORY_ISSUES.find(
+        (i) => i.id === cleanId || i.id.toLowerCase() === cleanId.toLowerCase()
+      );
+      if (target) {
+        if (departmentId) {
+          target.assignedDepartmentId = departmentId;
+          target.assignedDepartment = dept ? { id: dept.id, name: dept.name } : { id: departmentId, name: 'Operations' };
+        }
+        if (staffId) {
+          target.assignedStaffId = staffId;
+          target.assignedStaff = { id: staffId, name: 'Assigned Team' };
+        }
+        target.status = 'ASSIGNED';
+        target.updatedAt = new Date().toISOString();
+      }
+
+      return NextResponse.json({
+        data: {
+          assignIssue: target || {
+            id: cleanId,
+            status: 'ASSIGNED',
+            assignedDepartment: dept ? { id: dept.id, name: dept.name } : null,
+            assignedStaff: { id: staffId || 'usr-maint', name: 'Maintenance Team' },
+          },
+        },
+      });
+    }
+
     // Handle GetDepartments
     if (op.includes('getdepartments') || q.includes('departments')) {
       return NextResponse.json({
