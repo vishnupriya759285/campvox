@@ -191,13 +191,13 @@ export default function LoginPage() {
           <div className="max-w-xl self-start pt-2 lg:pt-4 xl:pt-6">
             {/* Primary Slogan */}
             <h1 className="text-3xl font-black tracking-[-0.035em] text-[#0A2540] sm:text-4xl lg:text-[44px] leading-[1.12] drop-shadow-[0_2px_12px_rgba(255,255,255,0.95)]">
-              Build your skills, <br />
-              shape <span className="text-emerald-700">your tomorrow.</span>
+              Your Campus. <br />
+              <span className="text-emerald-700">Better, Every Day.</span>
             </h1>
 
             {/* Sub-slogan */}
             <p className="mt-3 text-sm sm:text-base font-semibold leading-relaxed text-[#1D3D54] max-w-md drop-shadow-[0_1px_8px_rgba(255,255,255,0.95)]">
-              A campus where ideas grow, people support you, and opportunities turn into real progress.
+              Report maintenance issues, track real-time resolution, and keep every campus facility running at its best.
             </p>
           </div>
 

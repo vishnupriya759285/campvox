@@ -215,13 +215,13 @@ export default function RegisterPage() {
           <div className="max-w-xl self-start pt-2 lg:pt-4 xl:pt-6">
             {/* Primary Slogan */}
             <h1 className="text-3xl font-black tracking-[-0.035em] text-[#0A2540] sm:text-4xl lg:text-[44px] leading-[1.12] drop-shadow-[0_2px_12px_rgba(255,255,255,0.95)]">
-              Join the <br />
-              CAMPVOX <span className="text-emerald-700">community.</span>
+              Your Campus. <br />
+              <span className="text-emerald-700">Better, Every Day.</span>
             </h1>
 
             {/* Sub-slogan */}
             <p className="mt-3 text-sm sm:text-base font-semibold leading-relaxed text-[#1D3D54] max-w-md drop-shadow-[0_1px_8px_rgba(255,255,255,0.95)]">
-              Create your campus account to report concerns, receive live updates, and make every shared space better.
+              Create your account to report concerns, receive live maintenance updates, and keep shared facilities in top shape.
             </p>
 
             {/* 3 Campus Feature Badges */}
