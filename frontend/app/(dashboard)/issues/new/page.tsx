@@ -24,8 +24,9 @@ import {
   ExternalLink,
   Copy,
 } from 'lucide-react';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
-export default function ReportIssuePage() {
+function ReportIssueContent() {
   const router = useRouter();
 
   const [title, setTitle] = useState('');
@@ -610,5 +611,13 @@ export default function ReportIssuePage() {
         </div>
       </Modal>
     </div>
+  );
+}
+
+export default function ReportIssuePage() {
+  return (
+    <ProtectedRoute>
+      <ReportIssueContent />
+    </ProtectedRoute>
   );
 }

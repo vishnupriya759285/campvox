@@ -275,6 +275,12 @@ export default function IssueDetailPage() {
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      if (typeof window !== 'undefined') {
+        router.push(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+      }
+      return;
+    }
     if (!commentText.trim()) return;
 
     try {

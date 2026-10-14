@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { Search, Bell, Menu, ChevronDown, LogOut } from 'lucide-react';
+import { Search, Bell, Menu, ChevronDown, LogOut, Home, User as UserIcon } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useQuery } from '@apollo/client';
 import { GET_UNREAD_COUNT } from '@/graphql/queries';
@@ -14,7 +14,7 @@ interface TopNavbarProps {
 }
 
 export function TopNavbar({ onToggleMobileMenu }: TopNavbarProps) {
-  const { user, logout } = useAuth();
+  const { user, logout, isAuthenticated } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState('');
@@ -22,8 +22,9 @@ export function TopNavbar({ onToggleMobileMenu }: TopNavbarProps) {
 
   const { data } = useQuery(GET_UNREAD_COUNT, {
     pollInterval: 15000,
+    skip: !isAuthenticated,
   });
-  const unreadCount = data?.unreadNotificationCount ?? 2;
+  const unreadCount = data?.unreadNotificationCount ?? 0;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,12 +39,12 @@ export function TopNavbar({ onToggleMobileMenu }: TopNavbarProps) {
 
   const displayName = user?.name
     ? (user.name.toLowerCase() === 'admin' ? 'Admin' : user.name.split(' ')[0])
-    : (isAdminUser ? 'Admin' : 'Alex');
+    : (isAdminUser ? 'Admin' : 'Student');
   const roleOrYear = isAdminUser
     ? 'Campus Administrator'
     : isMaintUser
     ? 'Facility Operations'
-    : 'B.Tech CSE • 3rd Year';
+    : 'Campus Student';
 
   const getPageTitle = () => {
     if (pathname.startsWith('/admin')) return 'Admin Dashboard';
@@ -88,70 +89,91 @@ export function TopNavbar({ onToggleMobileMenu }: TopNavbarProps) {
           />
         </form>
 
-        {/* Notification Bell with Red Badge */}
+        {/* Link back to public campus home */}
         <Link
-          href="/notifications"
-          className="relative p-2 rounded-full text-[#475569] hover:text-[#123650] hover:bg-slate-100 transition-colors"
-          title="Notifications"
+          href="/"
+          className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-[#475569] hover:text-[#0B7A55] hover:bg-[#E1F7EE] transition-colors border border-transparent hover:border-emerald-200"
+          title="Return to CampVox Homepage"
         >
-          <Bell className="w-5 h-5 text-[#475569]" />
-          {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-[#EF4444] text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </span>
-          )}
+          <Home className="w-3.5 h-3.5 text-[#0B7A55]" />
+          <span>Home</span>
         </Link>
 
-        {/* User Profile Chip */}
-        <div className="relative">
-          <button
-            onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-            className="flex items-center gap-2.5 p-1 sm:pr-2.5 rounded-full hover:bg-slate-50 transition-colors border border-transparent hover:border-[#E2EEF1]"
-          >
-            <div className="relative w-8 h-8 rounded-full overflow-hidden bg-slate-200 shrink-0 ring-1 ring-[#D8E8E9]">
-              <Image
-                src="/brand/alex-avatar.png"
-                alt={displayName}
-                width={32}
-                height={32}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  // Fallback to text initials if image fails
-                  const target = e.target as HTMLElement;
-                  target.style.display = 'none';
-                }}
-              />
-            </div>
-            <div className="hidden sm:flex flex-col text-left">
-              <span className="text-xs font-bold text-[#123650] leading-tight">
-                {displayName}
-              </span>
-              <span className="text-[11px] font-medium text-[#64748B] leading-tight">
-                {roleOrYear}
-              </span>
-            </div>
-            <ChevronDown className="w-3.5 h-3.5 text-[#94A3B8] hidden sm:block" />
-          </button>
+        {isAuthenticated ? (
+          <>
+            {/* Notification Bell with Red Badge */}
+            <Link
+              href="/notifications"
+              className="relative p-2 rounded-full text-[#475569] hover:text-[#123650] hover:bg-slate-100 transition-colors"
+              title="Notifications"
+            >
+              <Bell className="w-5 h-5 text-[#475569]" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-[#EF4444] text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </Link>
 
-          {profileDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-card border border-[#E2EEF1] py-1 z-50 animate-in fade-in zoom-in-95">
-              <div className="px-3.5 py-2 border-b border-[#EDF4F6]">
-                <p className="text-xs font-bold text-[#123650] truncate">{user?.name || displayName}</p>
-                <p className="text-[11px] text-[#64748B] truncate">{user?.email || 'alex@campus.edu'}</p>
-              </div>
+            {/* User Profile Chip */}
+            <div className="relative">
               <button
-                onClick={() => {
-                  setProfileDropdownOpen(false);
-                  logout();
-                }}
-                className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-[#EF4444] hover:bg-rose-50 transition-colors"
+                onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                className="flex items-center gap-2.5 p-1 sm:pr-2.5 rounded-full hover:bg-slate-50 transition-colors border border-transparent hover:border-[#E2EEF1]"
               >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>Sign Out</span>
+                <div className="relative w-8 h-8 rounded-full overflow-hidden bg-slate-200 shrink-0 ring-1 ring-[#D8E8E9]">
+                  <Image
+                    src="/brand/alex-avatar.png"
+                    alt={displayName}
+                    width={32}
+                    height={32}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLElement;
+                      target.style.display = 'none';
+                    }}
+                  />
+                </div>
+                <div className="hidden sm:flex flex-col text-left">
+                  <span className="text-xs font-bold text-[#123650] leading-tight">
+                    {displayName}
+                  </span>
+                  <span className="text-[11px] font-medium text-[#64748B] leading-tight">
+                    {roleOrYear}
+                  </span>
+                </div>
+                <ChevronDown className="w-3.5 h-3.5 text-[#94A3B8] hidden sm:block" />
               </button>
+
+              {profileDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-card border border-[#E2EEF1] py-1 z-50 animate-in fade-in zoom-in-95">
+                  <div className="px-3.5 py-2 border-b border-[#EDF4F6]">
+                    <p className="text-xs font-bold text-[#123650] truncate">{user?.name || displayName}</p>
+                    <p className="text-[11px] text-[#64748B] truncate">{user?.email || 'student@campus.edu'}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setProfileDropdownOpen(false);
+                      logout();
+                    }}
+                    className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-[#EF4444] hover:bg-rose-50 transition-colors"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        ) : (
+          <Link
+            href={`/login?redirect=${encodeURIComponent(pathname)}`}
+            className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-[#E5F4EC]/95 px-3.5 sm:px-4 py-1.5 text-xs font-bold text-emerald-800 shadow-sm backdrop-blur-md transition hover:bg-emerald-100"
+          >
+            <UserIcon className="h-3.5 w-3.5 text-emerald-700" aria-hidden="true" />
+            <span>Student Login</span>
+          </Link>
+        )}
       </div>
     </header>
   );

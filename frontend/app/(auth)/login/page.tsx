@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, Suspense, type FormEvent } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useMutation } from '@apollo/client';
 import {
   AlertCircle,
@@ -14,6 +14,7 @@ import {
   Lock,
   Mail,
   User,
+  Info,
 } from 'lucide-react';
 import { LOGIN_MUTATION } from '@/graphql/mutations';
 import { BrandLogo } from '@/components/ui/BrandLogo';
@@ -22,21 +23,53 @@ import { useAuth } from '@/lib/auth-context';
 function createFallbackJwt(userId: string, email: string, role: string): string {
   const header = typeof window !== 'undefined' ? btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' })) : 'eyJhbGciOiJIUzI1NiJ9';
   const payload = typeof window !== 'undefined'
-    ? btoa(JSON.stringify({ sub: userId, email, role, iat: Math.floor(Date.now() / 1000) }))
+    ? btoa(JSON.stringify({ sub: userId, email, role, exp: Math.floor(Date.now() / 1000) + 86400 * 7, iat: Math.floor(Date.now() / 1000) }))
     : 'eyJzdWIiOiIxIn0';
   const signature = typeof window !== 'undefined' ? btoa('campvox_signature_key') : 'signature';
   return `${header}.${payload}.${signature}`;
 }
 
-export default function LoginPage() {
+function LoginFormContent() {
   const router = useRouter();
-  const { login } = useAuth();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect');
+  const { login, isAuthenticated, isLoading, isAdmin, isMaintenance } = useAuth();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [loginMutation, { loading }] = useMutation(LOGIN_MUTATION);
+
+  // If already authenticated, redirect to intended target or appropriate dashboard
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      if (redirectTo) {
+        router.push(redirectTo);
+      } else if (isAdmin) {
+        router.push('/admin');
+      } else if (isMaintenance) {
+        router.push('/maintenance');
+      } else {
+        router.push('/dashboard');
+      }
+    }
+  }, [isAuthenticated, isLoading, redirectTo, isAdmin, isMaintenance, router]);
+
+  const handlePostLoginRedirect = (userRole?: string, userEmail?: string) => {
+    if (redirectTo) {
+      router.push(redirectTo);
+      return;
+    }
+    const roleUpper = (userRole || '').toUpperCase();
+    const isUserAdmin = roleUpper === 'ADMIN' || userEmail?.toLowerCase().includes('admin');
+    const isUserMaint = roleUpper === 'MAINTENANCE' || userEmail?.toLowerCase().includes('maint');
+
+    if (isUserAdmin) router.push('/admin');
+    else if (isUserMaint) router.push('/maintenance');
+    else router.push('/dashboard');
+  };
 
   const handleGoogleLogin = () => {
     const googleName = email.trim() ? email.split('@')[0] : 'Campus Student';
@@ -50,7 +83,7 @@ export default function LoginPage() {
     };
     const token = createFallbackJwt(googleUser.id, googleUser.email, googleUser.role);
     login(token, googleUser, rememberMe);
-    router.push('/dashboard');
+    handlePostLoginRedirect(googleUser.role, googleUser.email);
   };
 
   const performLogin = async (loginEmail: string, loginPass: string) => {
@@ -61,16 +94,12 @@ export default function LoginPage() {
       });
       if (data?.login) {
         const u = data.login.user;
-        const isAdmin = u.role === 'ADMIN' || u.email?.toLowerCase().includes('admin');
-        const isMaint = u.role === 'MAINTENANCE' || u.email?.toLowerCase().includes('maint');
         login(data.login.token, u, rememberMe);
-        if (isAdmin) router.push('/admin');
-        else if (isMaint) router.push('/maintenance');
-        else router.push('/dashboard');
+        handlePostLoginRedirect(u.role, u.email);
         return;
       }
     } catch (error: any) {
-      // Check if user was registered locally or network issue
+      // Check if user was registered locally or network issue fallback
       if (loginEmail && loginPass.length >= 6) {
         const fallbackRole = loginEmail.includes('admin') ? 'ADMIN' : loginEmail.includes('maint') ? 'MAINTENANCE' : 'STUDENT';
         const fallbackUser = {
@@ -82,9 +111,7 @@ export default function LoginPage() {
         };
         const token = createFallbackJwt(fallbackUser.id, fallbackUser.email, fallbackUser.role);
         login(token, fallbackUser, rememberMe);
-        if (fallbackRole === 'ADMIN') router.push('/admin');
-        else if (fallbackRole === 'MAINTENANCE') router.push('/maintenance');
-        else router.push('/dashboard');
+        handlePostLoginRedirect(fallbackRole, fallbackUser.email);
         return;
       }
 
@@ -97,22 +124,6 @@ export default function LoginPage() {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     await performLogin(email, password);
-  };
-
-  const handleQuickLogin = async (role: 'student' | 'admin' | 'maintenance') => {
-    if (role === 'student') {
-      setEmail('student@fixmycampus.edu');
-      setPassword('Student@123');
-      await performLogin('student@fixmycampus.edu', 'Student@123');
-    } else if (role === 'admin') {
-      setEmail('admin@fixmycampus.edu');
-      setPassword('Admin@123');
-      await performLogin('admin@fixmycampus.edu', 'Admin@123');
-    } else {
-      setEmail('maintenance@fixmycampus.edu');
-      setPassword('Maint@123');
-      await performLogin('maintenance@fixmycampus.edu', 'Maint@123');
-    }
   };
 
   return (
@@ -145,10 +156,9 @@ export default function LoginPage() {
           >
             <Link
               href="/"
-              className="relative text-[#123650] font-bold hover:text-emerald-700 transition-colors"
+              className="hover:text-emerald-700 transition-colors"
             >
               Home
-              <span className="absolute -bottom-1 left-0 right-0 h-[2px] bg-emerald-600 rounded-full" />
             </Link>
             <Link
               href="/issues?search=Institution"
@@ -178,9 +188,9 @@ export default function LoginPage() {
 
           <Link
             href="/login"
-            className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-[#E5F4EC]/95 px-3.5 sm:px-4 py-1.5 text-xs font-bold text-emerald-800 shadow-sm backdrop-blur-md transition hover:bg-emerald-100"
+            className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-600 px-3.5 sm:px-4 py-1.5 text-xs font-bold text-white shadow-sm backdrop-blur-md transition hover:bg-emerald-700"
           >
-            <User className="h-3.5 w-3.5 text-emerald-700" aria-hidden="true" />
+            <User className="h-3.5 w-3.5 text-white" aria-hidden="true" />
             <span>Student Login</span>
           </Link>
         </header>
@@ -199,6 +209,21 @@ export default function LoginPage() {
             <p className="mt-3 text-sm sm:text-base font-semibold leading-relaxed text-[#1D3D54] max-w-md drop-shadow-[0_1px_8px_rgba(255,255,255,0.95)]">
               Report maintenance issues, track real-time resolution, and keep every campus facility running at its best.
             </p>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                href="/"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/90 bg-white/80 px-4 py-2 text-xs sm:text-sm font-bold text-[#123650] shadow-sm backdrop-blur-md transition hover:bg-white"
+              >
+                ← Back to Campus Home
+              </Link>
+              <Link
+                href="/issues"
+                className="inline-flex items-center gap-2 rounded-xl border border-emerald-200/80 bg-[#E5F4EC]/90 px-4 py-2 text-xs sm:text-sm font-bold text-emerald-800 shadow-sm backdrop-blur-md transition hover:bg-emerald-100"
+              >
+                Browse Public Issues
+              </Link>
+            </div>
           </div>
 
           {/* Right Floating White Glass Card */}
@@ -214,11 +239,17 @@ export default function LoginPage() {
               </div>
 
               {/* Welcome Back Badge */}
-              <div className="mb-1.5">
+              <div className="mb-1.5 flex items-center justify-between">
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-100 bg-[#E5F4EC] px-2.5 py-1 text-xs font-bold text-emerald-800">
                   <GraduationCap className="h-3.5 w-3.5 text-emerald-700" aria-hidden="true" />
                   Welcome Back
                 </span>
+                {redirectTo && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700">
+                    <Info className="h-3 w-3" />
+                    Sign in to continue
+                  </span>
+                )}
               </div>
 
               {/* Headline & Subtitle */}
@@ -375,7 +406,7 @@ export default function LoginPage() {
               <p className="mt-4 text-center text-xs font-medium text-[#6B849A]">
                 Don&apos;t have an account?{' '}
                 <Link
-                  href="/register"
+                  href={redirectTo ? `/register?redirect=${encodeURIComponent(redirectTo)}` : '/register'}
                   className="font-bold text-emerald-700 transition hover:text-emerald-800 hover:underline"
                 >
                   Create account →
@@ -393,5 +424,19 @@ export default function LoginPage() {
         </footer>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen w-full flex items-center justify-center bg-[#E9F4F8]">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600/20 border-t-emerald-600" />
+        </div>
+      }
+    >
+      <LoginFormContent />
+    </Suspense>
   );
 }

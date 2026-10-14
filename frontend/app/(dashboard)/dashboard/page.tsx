@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { GET_MY_ISSUES } from '@/graphql/queries';
 import { useAuth } from '@/lib/auth-context';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
 type IssueItem = {
   id: string;
@@ -168,7 +169,7 @@ function getStatusBadge(status: IssueItem['status']) {
   }
 }
 
-export default function StudentDashboardPage() {
+function StudentDashboardContent() {
   const { user } = useAuth();
   const { data } = useQuery(GET_MY_ISSUES, { pollInterval: 12000 });
 
@@ -519,5 +520,13 @@ export default function StudentDashboardPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function StudentDashboardPage() {
+  return (
+    <ProtectedRoute>
+      <StudentDashboardContent />
+    </ProtectedRoute>
   );
 }

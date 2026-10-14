@@ -32,6 +32,14 @@ function IssuesListContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
 
+  React.useEffect(() => {
+    const q = searchParams.get('search') || '';
+    setSearch(q);
+    const cat = searchParams.get('category') || '';
+    if (cat) setCategory(cat);
+    setCurrentPage(1);
+  }, [searchParams]);
+
   const { data: deptData } = useQuery(GET_DEPARTMENTS);
   const departments = deptData?.departments || [];
 

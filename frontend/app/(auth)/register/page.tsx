@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
 import { REGISTER_MUTATION } from '@/graphql/mutations';
 import { GET_DEPARTMENTS } from '@/graphql/queries';
@@ -32,9 +33,21 @@ function createFallbackJwt(userId: string, email: string, role: string): string 
   return `${header}.${payload}.${signature}`;
 }
 
-export default function RegisterPage() {
+function RegisterContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect');
   const { login } = useAuth();
+
+  const handlePostRegisterRedirect = (userRole: string) => {
+    if (redirectTo) {
+      router.push(redirectTo);
+      return;
+    }
+    if (userRole === 'ADMIN') router.push('/admin');
+    else if (userRole === 'MAINTENANCE') router.push('/maintenance');
+    else router.push('/dashboard');
+  };
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -72,7 +85,7 @@ export default function RegisterPage() {
     };
     const fallbackToken = createFallbackJwt(fallbackUser.id, fallbackUser.email, fallbackUser.role);
     login(fallbackToken, fallbackUser, true);
-    router.push('/dashboard');
+    handlePostRegisterRedirect(fallbackUser.role);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -116,9 +129,7 @@ export default function RegisterPage() {
 
       if (data?.register) {
         login(data.register.token, data.register.user, true);
-        if (role === 'ADMIN') router.push('/admin');
-        else if (role === 'MAINTENANCE') router.push('/maintenance');
-        else router.push('/dashboard');
+        handlePostRegisterRedirect(data.register.user.role);
         return;
       }
     } catch (err: any) {
@@ -133,10 +144,7 @@ export default function RegisterPage() {
       };
       const fallbackToken = createFallbackJwt(fallbackUser.id, fallbackUser.email, fallbackUser.role);
       login(fallbackToken, fallbackUser, true);
-
-      if (role === 'ADMIN') router.push('/admin');
-      else if (role === 'MAINTENANCE') router.push('/maintenance');
-      else router.push('/dashboard');
+      handlePostRegisterRedirect(fallbackUser.role);
       return;
     } finally {
       setIsSubmitting(false);
@@ -491,7 +499,7 @@ export default function RegisterPage() {
               <p className="mt-3.5 text-center text-xs font-medium text-[#6B849A]">
                 Already have an account?{' '}
                 <Link
-                  href="/login"
+                  href={redirectTo ? `/login?redirect=${encodeURIComponent(redirectTo)}` : '/login'}
                   className="font-bold text-emerald-700 transition hover:text-emerald-800 hover:underline"
                 >
                   Sign in →
@@ -509,5 +517,19 @@ export default function RegisterPage() {
         </footer>
       </div>
     </main>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen w-full flex items-center justify-center bg-[#E9F4F8]">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600/20 border-t-emerald-600" />
+        </div>
+      }
+    >
+      <RegisterContent />
+    </Suspense>
   );
 }

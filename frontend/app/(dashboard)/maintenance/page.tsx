@@ -22,8 +22,9 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
-export default function MaintenanceDashboardPage() {
+function MaintenanceDashboardContent() {
   const { user } = useAuth();
   const [actionError, setActionError] = useState('');
 
@@ -239,5 +240,13 @@ export default function MaintenanceDashboardPage() {
         </div>
       </Card>
     </div>
+  );
+}
+
+export default function MaintenanceDashboardPage() {
+  return (
+    <ProtectedRoute>
+      <MaintenanceDashboardContent />
+    </ProtectedRoute>
   );
 }

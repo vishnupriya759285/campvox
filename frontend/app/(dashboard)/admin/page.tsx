@@ -54,8 +54,9 @@ import {
   getWorkerById,
   findWorkerByNameOrEmail,
 } from '@/lib/workers';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
-export default function AdminDashboardPage() {
+function AdminDashboardContent() {
   const { data: analyticsData, loading: analyticsLoading, refetch: refetchAnalytics } = useQuery(GET_ANALYTICS_OVERVIEW, {
     pollInterval: 10000,
   });
@@ -1011,5 +1012,13 @@ export default function AdminDashboardPage() {
         )}
       </Modal>
     </div>
+  );
+}
+
+export default function AdminDashboardPage() {
+  return (
+    <ProtectedRoute>
+      <AdminDashboardContent />
+    </ProtectedRoute>
   );
 }

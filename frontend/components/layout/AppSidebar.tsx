@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
+  Home,
   LayoutDashboard,
   ClipboardList,
   PlusCircle,
@@ -16,6 +17,7 @@ import {
   Settings,
   Users,
   Wrench,
+  LogIn,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useQuery } from '@apollo/client';
@@ -27,7 +29,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ onCloseMobile }: AppSidebarProps) {
   const pathname = usePathname();
-  const { user, logout, isAdmin, isMaintenance } = useAuth();
+  const { user, logout, isAdmin, isMaintenance, isAuthenticated } = useAuth();
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
 
   const { data } = useQuery(GET_UNREAD_COUNT, {
@@ -40,17 +42,22 @@ export function AppSidebar({ onCloseMobile }: AppSidebarProps) {
 
   const navItems = [
     {
+      label: 'Campus Home',
+      href: '/',
+      icon: Home,
+    },
+    {
       label: isAdminUser ? 'Admin Dashboard' : 'Dashboard',
       href: isAdminUser ? '/admin' : '/dashboard',
       icon: LayoutDashboard,
     },
     {
-      label: isAdminUser ? 'All Campus Issues' : 'My Issues',
+      label: isAdminUser ? 'All Campus Issues' : 'All Issues',
       href: '/issues',
       icon: ClipboardList,
     },
     { label: 'Report an Issue', href: '/issues/new', icon: PlusCircle },
-    { label: 'Notifications', href: '/notifications', icon: Bell, badge: unreadCount },
+    ...(isAuthenticated ? [{ label: 'Notifications', href: '/notifications', icon: Bell, badge: unreadCount }] : []),
   ];
 
   return (
@@ -69,7 +76,7 @@ export function AppSidebar({ onCloseMobile }: AppSidebarProps) {
       <div className="relative z-10">
         {/* Brand Logo Header */}
         <div className="pt-1 pb-6 px-1">
-          <Link href="/dashboard" className="flex items-center gap-2.5 group">
+          <Link href="/" className="flex items-center gap-2.5 group">
             <Image
               src="/brand/campvox-emblem.png"
               alt="CAMPVOX Logo"
@@ -177,13 +184,24 @@ export function AppSidebar({ onCloseMobile }: AppSidebarProps) {
             </div>
           </div>
 
-          <button
-            onClick={logout}
-            className="p-1.5 rounded-lg text-[#94A3B8] hover:text-[#EF4444] hover:bg-rose-50 transition-colors"
-            title="Sign Out"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
+          {isAuthenticated ? (
+            <button
+              onClick={logout}
+              className="p-1.5 rounded-lg text-[#94A3B8] hover:text-[#EF4444] hover:bg-rose-50 transition-colors"
+              title="Sign Out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          ) : (
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold text-emerald-800 bg-[#E5F4EC] hover:bg-emerald-100 transition-colors shadow-xs"
+              title="Student Sign In"
+            >
+              <LogIn className="w-3.5 h-3.5 text-emerald-700" />
+              <span>Sign In</span>
+            </Link>
+          )}
         </div>
       </div>
     </aside>

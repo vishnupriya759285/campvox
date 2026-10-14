@@ -59,6 +59,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         savedUser = null;
       }
 
+      // Check token expiration if valid JWT format
+      if (savedToken && savedToken.split('.').length === 3) {
+        try {
+          const payloadBase64 = savedToken.split('.')[1];
+          const decoded = JSON.parse(atob(payloadBase64));
+          if (decoded.exp && Math.floor(Date.now() / 1000) >= decoded.exp) {
+            // Token has expired
+            localStorage.removeItem(TOKEN_KEY);
+            localStorage.removeItem(USER_KEY);
+            sessionStorage.removeItem(TOKEN_KEY);
+            sessionStorage.removeItem(USER_KEY);
+            savedToken = null;
+            savedUser = null;
+          }
+        } catch {
+          // Keep token if non-standard or parsing failed
+        }
+      }
+
       if (savedToken && savedUser) {
         setToken(savedToken);
         setUser(JSON.parse(savedUser));

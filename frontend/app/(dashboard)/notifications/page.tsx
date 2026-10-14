@@ -20,8 +20,9 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
-export default function NotificationsPage() {
+function NotificationsContent() {
   const [tab, setTab] = useState<'all' | 'unread'>('all');
 
   const { data, loading, refetch } = useQuery(GET_NOTIFICATIONS, {
@@ -193,5 +194,13 @@ export default function NotificationsPage() {
         )}
       </Card>
     </div>
+  );
+}
+
+export default function NotificationsPage() {
+  return (
+    <ProtectedRoute>
+      <NotificationsContent />
+    </ProtectedRoute>
   );
 }
