@@ -398,8 +398,8 @@ export default function HomePage() {
                     </div>
                   )}
 
-                  {/* Form */}
-                  <form onSubmit={handleSubmit} className="mt-4 space-y-3.5">
+                  {/* Form Container */}
+                  <div className="mt-4 space-y-3.5">
                     {/* Email Address */}
                     <div>
                       <label className="mb-1 block text-xs font-bold text-[#4B667C]">
@@ -415,8 +415,14 @@ export default function HomePage() {
                           required
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              performLogin(email, password);
+                            }
+                          }}
                           placeholder="you@example.com"
-                          autoComplete="email"
+                          autoComplete="off"
                           className="w-full rounded-xl border border-[#DCE7EB] bg-white py-2.5 pl-10 pr-3 text-xs sm:text-sm font-medium text-[#123650] outline-none transition placeholder:text-[#9AB0BE] focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                         />
                       </div>
@@ -437,8 +443,14 @@ export default function HomePage() {
                           required
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              performLogin(email, password);
+                            }
+                          }}
                           placeholder="••••••••••"
-                          autoComplete="current-password"
+                          autoComplete="off"
                           className="w-full rounded-xl border border-[#DCE7EB] bg-white py-2.5 pl-10 pr-10 text-xs sm:text-sm font-medium text-[#123650] outline-none transition placeholder:text-[#9AB0BE] focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                         />
                         <button
@@ -481,14 +493,15 @@ export default function HomePage() {
 
                     {/* Sign In Button */}
                     <button
-                      type="submit"
+                      type="button"
+                      onClick={() => performLogin(email, password)}
                       disabled={loading}
                       className="w-full rounded-xl bg-gradient-to-r from-[#19875F] to-[#12704E] py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-[0_10px_20px_rgba(22,132,97,0.25)] transition hover:from-[#157954] hover:to-[#0F6042] active:scale-[0.99] disabled:opacity-70 flex items-center justify-center gap-2"
                     >
                       <ArrowRight className="h-4 w-4" aria-hidden="true" />
                       <span>{loading ? 'Signing in...' : 'Sign In'}</span>
                     </button>
-                  </form>
+                  </div>
 
                   {/* Divider */}
                   <div className="relative my-3 text-center">
