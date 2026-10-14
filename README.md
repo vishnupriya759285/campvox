@@ -38,38 +38,45 @@ CAMPVOX delivers an automated, transparent, and multi-role solution:
 
 ## 📸 Visual Showcase & Interface Gallery
 
-### 1. Student Dashboard & Campus Overview
+### 1. CAMPVOX Public Landing & Student Portal
+The public campus homepage featuring transparent facility navigation (Home, Institution, Hostel, Staff Quarters, Guest House), hero callouts, and clean student login authentication.
+
+![CAMPVOX Landing & Portal](screenshots/01-landing-homepage.png)
+
+---
+
+### 2. Student Dashboard & Campus Overview
 Personalized student command center displaying live ticket resolution metrics, recent issue status chips, quick action shortcuts, and official campus circulars.
 
-![Student Dashboard](screenshots/01-student-dashboard.png)
+![Student Dashboard](screenshots/02-student-dashboard.png)
 
 ---
 
-### 2. Issue Reporting with Location & Zone Selection
+### 3. Issue Reporting with Location & Zone Selection
 Intuitive submission interface with category selectors, quick campus facility chips (Academic Blocks, Hostels, Quarters, Guest House), priority indicators, and photo upload dropzone.
 
-![Report Campus Issue](screenshots/02-report-issue-form.png)
+![Report Campus Issue](screenshots/03-report-issue-form.png)
 
 ---
 
-### 3. Issue Details & Admin Quick Actions
+### 4. Issue Details & Admin Quick Actions
 Comprehensive ticket details page showing chronological status timeline, category metadata, reporter identity, and role-guarded Admin Quick Actions.
 
-![Issue Details Admin Quick Actions](screenshots/03-issue-details-admin.png)
+![Issue Details Admin Quick Actions](screenshots/04-issue-details-admin.png)
 
 ---
 
-### 4. Technician Allocation & Worker Dispatch Modal
+### 5. Technician Allocation & Worker Dispatch Modal
 Departmental allocation interface with 12 pre-registered technicians across Electrical, Plumbing, IT, and Facilities, complete with direct contact numbers and live dispatch status.
 
-![Worker Assignment Modal](screenshots/04-worker-assignment-modal.png)
+![Worker Assignment Modal](screenshots/05-worker-assignment-modal.png)
 
 ---
 
-### 5. In-Progress Task & Technician Dispatch Card
+### 6. In-Progress Task & Technician Dispatch Card
 Live status progression view reflecting technician assignment, technician phone badge, and one-click resolution triggers.
 
-![Issue In Progress State](screenshots/05-issue-in-progress-assigned.png)
+![Issue In Progress State](screenshots/06-issue-in-progress-assigned.png)
 
 
 ---
@@ -396,11 +403,12 @@ campvox/
 │   └── package.json
 │
 ├── screenshots/                       # High-Resolution Showcase Images
-│   ├── 01-student-dashboard.png
-│   ├── 02-report-issue-form.png
-│   ├── 03-issue-details-admin.png
-│   ├── 04-worker-assignment-modal.png
-│   └── 05-issue-in-progress-assigned.png
+│   ├── 01-landing-homepage.png
+│   ├── 02-student-dashboard.png
+│   ├── 03-report-issue-form.png
+│   ├── 04-issue-details-admin.png
+│   ├── 05-worker-assignment-modal.png
+│   └── 06-issue-in-progress-assigned.png
 │
 ├── docker-compose.yml                 # Multi-Container Orchestration
 ├── test_auth_flow.js                  # Authentication Integration Test
