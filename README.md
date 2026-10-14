@@ -71,10 +71,6 @@ Live status progression view reflecting technician assignment, technician phone 
 
 ![Issue In Progress State](screenshots/05-issue-in-progress-assigned.png)
 
-### 6. Secure Role-Based Authentication
-Clean, dedicated student and administrative login interface with input verification and credential validation.
-
-![Secure Login Dialog](screenshots/06-login-card.png)
 
 ---
 
@@ -404,8 +400,7 @@ campvox/
 │   ├── 02-report-issue-form.png
 │   ├── 03-issue-details-admin.png
 │   ├── 04-worker-assignment-modal.png
-│   ├── 05-issue-in-progress-assigned.png
-│   └── 06-login-card.png
+│   └── 05-issue-in-progress-assigned.png
 │
 ├── docker-compose.yml                 # Multi-Container Orchestration
 ├── test_auth_flow.js                  # Authentication Integration Test
