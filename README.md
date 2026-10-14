@@ -67,14 +67,14 @@ Comprehensive ticket details page showing chronological status timeline, categor
 ---
 
 ### 5. Technician Allocation & Worker Dispatch Modal
-Departmental allocation interface with 12 pre-registered technicians across Electrical, Plumbing, IT, and Facilities, complete with direct contact numbers and live dispatch status.
+Departmental allocation interface enabling administrators to assign verified campus technicians across Electrical, Plumbing, IT, and Facilities with live dispatch status.
 
 ![Worker Assignment Modal](screenshots/05-worker-assignment-modal.png)
 
 ---
 
 ### 6. In-Progress Task & Technician Dispatch Card
-Live status progression view reflecting technician assignment, technician phone badge, and one-click resolution triggers.
+Live status progression view reflecting technician assignment, department routing, and one-click resolution triggers.
 
 ![Issue In Progress State](screenshots/06-issue-in-progress-assigned.png)
 
@@ -223,27 +223,6 @@ Every campus grievance transitions through a deterministic, auditable 6-stage li
     (Reporter confirms  (Admin / Tech
      satisfaction)       re-evaluates)
 ```
-
----
-
-## 👥 Pre-Configured Campus Technicians Directory
-
-CAMPVOX includes 12 active campus technicians categorized into 4 core operational departments:
-
-| Department | Technician Name | Designation | Contact Number | Status |
-|---|---|---|---|---|
-| **Electrical** | Rajesh Kumar | Senior Campus Electrician | `+91 98450 11111` | Ready to Dispatch |
-| **Electrical** | Suresh M. | Assistant Electrician | `+91 98450 11112` | Ready to Dispatch |
-| **Electrical** | Anand P. | Electrical Maintenance Tech | `+91 98450 11113` | Ready to Dispatch |
-| **Plumbing** | Ramesh Babu | Senior Plumber | `+91 98450 22221` | Ready to Dispatch |
-| **Plumbing** | Manjunath V. | Water Lines & Sanitation | `+91 98450 22222` | Ready to Dispatch |
-| **Plumbing** | Shiva Kumar | General Plumbing Tech | `+91 98450 22223` | Ready to Dispatch |
-| **IT & Network** | Karthik S. | Network Systems Engineer | `+91 98450 33331` | Ready to Dispatch |
-| **IT & Network** | Vignesh R. | Wi-Fi & Hardware Specialist | `+91 98450 33332` | Ready to Dispatch |
-| **IT & Network** | Deepa N. | Smart Classroom Tech Support | `+91 98450 33333` | Ready to Dispatch |
-| **Facilities & Civil**| Sajeev K. | Campus Maintenance Staff | `+91 98450 00000` | Ready to Dispatch |
-| **Facilities & Civil**| Govind R. | Carpenter & Civil Works | `+91 98450 44442` | Ready to Dispatch |
-| **Facilities & Civil**| Venkatesh M.| Grounds & Structural Tech | `+91 98450 44443` | Ready to Dispatch |
 
 ---
 
