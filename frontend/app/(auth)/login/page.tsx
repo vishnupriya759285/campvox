@@ -88,36 +88,101 @@ function LoginFormContent() {
 
   const performLogin = async (loginEmail: string, loginPass: string) => {
     setErrorMsg('');
+    const normalizedEmail = loginEmail.trim().toLowerCase();
+
     try {
-      const { data } = await loginMutation({
-        variables: { input: { email: loginEmail.trim(), password: loginPass } },
+      const res = await loginMutation({
+        variables: { input: { email: normalizedEmail, password: loginPass } },
       });
-      if (data?.login) {
-        const u = data.login.user;
-        login(data.login.token, u, rememberMe);
-        handlePostLoginRedirect(u.role, u.email);
-        return;
-      }
-    } catch (error: any) {
-      // Check if user was registered locally or network issue fallback
-      if (loginEmail && loginPass.length >= 6) {
-        const fallbackRole = loginEmail.includes('admin') ? 'ADMIN' : loginEmail.includes('maint') ? 'MAINTENANCE' : 'STUDENT';
-        const fallbackUser = {
-          id: `usr-${Date.now()}`,
-          name: loginEmail.split('@')[0] || 'Campus User',
-          email: loginEmail.trim().toLowerCase(),
-          role: fallbackRole as any,
-          departmentId: null,
-        };
-        const token = createFallbackJwt(fallbackUser.id, fallbackUser.email, fallbackUser.role);
-        login(token, fallbackUser, rememberMe);
-        handlePostLoginRedirect(fallbackRole, fallbackUser.email);
+
+      if (res.errors && res.errors.length > 0) {
+        setErrorMsg(res.errors[0].message || 'Invalid email or password.');
         return;
       }
 
-      setErrorMsg(
-        error.message || 'We could not sign you in. Check your campus credentials.'
-      );
+      if (res.data?.login) {
+        const u = res.data.login.user;
+        login(res.data.login.token, u, rememberMe);
+        handlePostLoginRedirect(u.role, u.email);
+        return;
+      }
+
+      setErrorMsg('Invalid credentials. This account is not registered. Please create an account first.');
+    } catch (error: any) {
+      // Extract exact GraphQL error message from backend rejection
+      const gqlMessage =
+        error?.graphQLErrors?.[0]?.message ||
+        error?.networkError?.result?.errors?.[0]?.message ||
+        error?.message ||
+        '';
+
+      const isNetworkFailure =
+        gqlMessage.includes('Failed to fetch') ||
+        gqlMessage.includes('NetworkError') ||
+        gqlMessage.includes('Load failed');
+
+      // If backend explicitly rejected with an authentication error:
+      if (gqlMessage && !isNetworkFailure) {
+        setErrorMsg(gqlMessage);
+        return;
+      }
+
+      // Check client-side registered accounts stored in localStorage
+      if (typeof window !== 'undefined') {
+        try {
+          const registeredUsers: any[] = JSON.parse(
+            localStorage.getItem('campvox_registered_users') || '[]'
+          );
+          const found = registeredUsers.find(
+            (u) => (u.email || '').toLowerCase() === normalizedEmail
+          );
+          if (found) {
+            if (found.password && found.password !== loginPass) {
+              setErrorMsg('Invalid password. Please check your credentials.');
+              return;
+            }
+            const token = createFallbackJwt(found.id, found.email, found.role);
+            login(token, found, rememberMe);
+            handlePostLoginRedirect(found.role, found.email);
+            return;
+          }
+        } catch {}
+      }
+
+      // Predefined campus demo accounts (offline fallback)
+      const DEMO_ACCOUNTS: Record<string, { role: string; name: string; pass: string }> = {
+        'student@fixmycampus.edu': { role: 'STUDENT', name: 'Vishnupriya M. V.', pass: 'Student@123' },
+        'student@campvox.edu': { role: 'STUDENT', name: 'Alex Rivera', pass: 'Student@123' },
+        'admin@fixmycampus.edu': { role: 'ADMIN', name: 'Admin Operations', pass: 'Admin@123' },
+        'admin@campvox.edu': { role: 'ADMIN', name: 'Admin Operations', pass: 'Admin@123' },
+        'faculty@fixmycampus.edu': { role: 'FACULTY', name: 'Dr. Animesh Roy', pass: 'Faculty@123' },
+        'faculty@campvox.edu': { role: 'FACULTY', name: 'Dr. Animesh Roy', pass: 'Faculty@123' },
+        'maintenance@fixmycampus.edu': { role: 'MAINTENANCE', name: 'Sajeev K.', pass: 'Maint@123' },
+        'maintenance@campvox.edu': { role: 'MAINTENANCE', name: 'Sajeev K.', pass: 'Maint@123' },
+      };
+
+      const demo = DEMO_ACCOUNTS[normalizedEmail];
+      if (demo) {
+        if (loginPass === demo.pass) {
+          const demoUser = {
+            id: `usr-${demo.role.toLowerCase()}`,
+            name: demo.name,
+            email: normalizedEmail,
+            role: demo.role as any,
+            departmentId: null,
+          };
+          const token = createFallbackJwt(demoUser.id, demoUser.email, demoUser.role);
+          login(token, demoUser, rememberMe);
+          handlePostLoginRedirect(demo.role, demoUser.email);
+          return;
+        } else {
+          setErrorMsg('Invalid password. Please check your credentials.');
+          return;
+        }
+      }
+
+      // If unregistered and not a valid demo user -> REJECT!
+      setErrorMsg('Invalid credentials. This account is not registered. Please create an account first.');
     }
   };
 

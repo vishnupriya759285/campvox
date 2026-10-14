@@ -112,6 +112,21 @@ function RegisterContent() {
       return;
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Check duplicate in local storage
+    if (typeof window !== 'undefined') {
+      try {
+        const localRegs: any[] = JSON.parse(
+          localStorage.getItem('campvox_registered_users') || '[]'
+        );
+        if (localRegs.some((u) => (u.email || '').toLowerCase() === normalizedEmail)) {
+          setErrorMsg('An account with this email already exists. Please sign in instead.');
+          return;
+        }
+      } catch {}
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -119,7 +134,7 @@ function RegisterContent() {
         variables: {
           input: {
             name: name.trim(),
-            email: email.trim().toLowerCase(),
+            email: normalizedEmail,
             password,
             role,
             departmentId: departmentId || undefined,
@@ -128,20 +143,63 @@ function RegisterContent() {
       });
 
       if (data?.register) {
+        if (typeof window !== 'undefined') {
+          try {
+            const localRegs: any[] = JSON.parse(
+              localStorage.getItem('campvox_registered_users') || '[]'
+            );
+            localRegs.push({
+              id: data.register.user.id,
+              name: data.register.user.name,
+              email: normalizedEmail,
+              password,
+              role: data.register.user.role,
+              departmentId: data.register.user.departmentId,
+            });
+            localStorage.setItem('campvox_registered_users', JSON.stringify(localRegs));
+          } catch {}
+        }
         login(data.register.token, data.register.user, true);
         handlePostRegisterRedirect(data.register.user.role);
         return;
       }
     } catch (err: any) {
-      console.warn('Backend register failed, trying fallback:', err);
-      // If server is unreachable or offline, create account locally so user is never blocked
+      const gqlMessage =
+        err?.graphQLErrors?.[0]?.message ||
+        err?.networkError?.result?.errors?.[0]?.message ||
+        err?.message ||
+        '';
+
+      const isNetworkFailure =
+        gqlMessage.includes('Failed to fetch') ||
+        gqlMessage.includes('NetworkError') ||
+        gqlMessage.includes('Load failed');
+
+      if (gqlMessage && !isNetworkFailure) {
+        setErrorMsg(gqlMessage);
+        return;
+      }
+
+      // If server is unreachable or offline, create account locally and persist
       const fallbackUser: AuthUser = {
         id: `usr-${Date.now()}`,
         name: name.trim(),
-        email: email.trim().toLowerCase(),
+        email: normalizedEmail,
         role,
         departmentId: departmentId || null,
       };
+      if (typeof window !== 'undefined') {
+        try {
+          const localRegs: any[] = JSON.parse(
+            localStorage.getItem('campvox_registered_users') || '[]'
+          );
+          localRegs.push({
+            ...fallbackUser,
+            password,
+          });
+          localStorage.setItem('campvox_registered_users', JSON.stringify(localRegs));
+        } catch {}
+      }
       const fallbackToken = createFallbackJwt(fallbackUser.id, fallbackUser.email, fallbackUser.role);
       login(fallbackToken, fallbackUser, true);
       handlePostRegisterRedirect(fallbackUser.role);

@@ -284,11 +284,33 @@ const COLLEGE_WORKERS: CollegeWorker[] = [
   },
 ];
 
-const ALL_USERS = [
+const REGISTERED_ACCOUNTS: Array<{
+  id: string;
+  name: string;
+  email: string;
+  password?: string;
+  role: string;
+  departmentId?: string | null;
+  department?: { id: string; name: string } | null;
+  phone?: string;
+  designation?: string;
+  createdAt: string;
+}> = [
   {
     id: 'usr-admin',
     name: 'Admin Operations',
     email: 'admin@fixmycampus.edu',
+    password: 'Admin@123',
+    role: 'ADMIN',
+    departmentId: 'dept-facilities',
+    department: { id: 'dept-facilities', name: 'Facilities' },
+    createdAt: '2025-01-01T08:00:00Z',
+  },
+  {
+    id: 'usr-admin-campvox',
+    name: 'Admin Operations',
+    email: 'admin@campvox.edu',
+    password: 'Admin@123',
     role: 'ADMIN',
     departmentId: 'dept-facilities',
     department: { id: 'dept-facilities', name: 'Facilities' },
@@ -296,15 +318,71 @@ const ALL_USERS = [
   },
   {
     id: 'usr-student',
-    name: 'Alex Rivera',
-    email: 'student@campvox.edu',
+    name: 'Vishnupriya M. V.',
+    email: 'student@fixmycampus.edu',
+    password: 'Student@123',
     role: 'STUDENT',
     departmentId: null,
     department: null,
     createdAt: '2025-01-05T08:00:00Z',
   },
-  ...COLLEGE_WORKERS,
+  {
+    id: 'usr-student-campvox',
+    name: 'Alex Rivera',
+    email: 'student@campvox.edu',
+    password: 'Student@123',
+    role: 'STUDENT',
+    departmentId: null,
+    department: null,
+    createdAt: '2025-01-05T08:00:00Z',
+  },
+  {
+    id: 'usr-faculty',
+    name: 'Dr. Animesh Roy',
+    email: 'faculty@fixmycampus.edu',
+    password: 'Faculty@123',
+    role: 'FACULTY',
+    departmentId: null,
+    department: null,
+    createdAt: '2025-01-05T08:00:00Z',
+  },
+  {
+    id: 'usr-faculty-campvox',
+    name: 'Dr. Animesh Roy',
+    email: 'faculty@campvox.edu',
+    password: 'Faculty@123',
+    role: 'FACULTY',
+    departmentId: null,
+    department: null,
+    createdAt: '2025-01-05T08:00:00Z',
+  },
+  {
+    id: 'usr-maint',
+    name: 'Sajeev K.',
+    email: 'maintenance@fixmycampus.edu',
+    password: 'Maint@123',
+    role: 'MAINTENANCE',
+    departmentId: 'dept-facilities',
+    department: { id: 'dept-facilities', name: 'Facilities' },
+    createdAt: '2025-01-05T08:00:00Z',
+  },
+  {
+    id: 'usr-maint-campvox',
+    name: 'Sajeev K.',
+    email: 'maintenance@campvox.edu',
+    password: 'Maint@123',
+    role: 'MAINTENANCE',
+    departmentId: 'dept-facilities',
+    department: { id: 'dept-facilities', name: 'Facilities' },
+    createdAt: '2025-01-05T08:00:00Z',
+  },
+  ...COLLEGE_WORKERS.map((w) => ({
+    ...w,
+    password: 'Worker@123',
+  })),
 ];
+
+const ALL_USERS = [...REGISTERED_ACCOUNTS];
 
 export async function POST(req: NextRequest) {
   try {
@@ -575,31 +653,121 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Handle Login / Register / Me
-    if (op.includes('login') || op.includes('register') || q.includes('login(') || q.includes('register(')) {
-      const email = (variables?.input?.email || 'student@campvox.edu').trim().toLowerCase();
-      const rawName = variables?.input?.name || email.split('@')[0];
-      const isAdm = email.includes('admin');
-      const isMnt = email.includes('maint');
-      const role = isAdm ? 'ADMIN' : isMnt ? 'MAINTENANCE' : 'STUDENT';
-      const name = isAdm ? (rawName === 'admin' ? 'Admin' : rawName) : rawName;
-      const user = {
-        id: isAdm ? 'usr-admin' : isMnt ? 'usr-maint' : 'usr-student',
-        name,
-        email,
-        role,
-        departmentId: null,
-        department: null,
+    // Handle Register
+    if (op.includes('register') || q.includes('register(')) {
+      const input = variables?.input || {};
+      const regEmail = (input.email || '').trim().toLowerCase();
+      const regName = (input.name || '').trim();
+      const regPassword = input.password || '';
+      const regRole = (input.role || 'STUDENT').toUpperCase();
+
+      if (!regEmail || !regPassword) {
+        return NextResponse.json(
+          { errors: [{ message: 'Email and password are required.' }] },
+          { status: 400 }
+        );
+      }
+
+      const existing = REGISTERED_ACCOUNTS.find(
+        (u) => u.email.toLowerCase() === regEmail
+      );
+      if (existing) {
+        return NextResponse.json(
+          { errors: [{ message: 'An account with this email already exists. Please sign in instead.' }] },
+          { status: 400 }
+        );
+      }
+
+      const dept = input.departmentId ? DEPARTMENTS.find((d) => d.id === input.departmentId) || null : null;
+      const newUser = {
+        id: `usr-${Date.now()}`,
+        name: regName || regEmail.split('@')[0],
+        email: regEmail,
+        password: regPassword,
+        role: regRole,
+        departmentId: input.departmentId || null,
+        department: dept ? { id: dept.id, name: dept.name } : null,
+        createdAt: new Date().toISOString(),
       };
+      REGISTERED_ACCOUNTS.unshift(newUser);
+      ALL_USERS.unshift(newUser);
+
+      const token = 'campvox_jwt_' + newUser.id + '_' + Date.now();
+      return NextResponse.json({
+        data: {
+          register: {
+            token,
+            user: {
+              id: newUser.id,
+              name: newUser.name,
+              email: newUser.email,
+              role: newUser.role,
+              departmentId: newUser.departmentId,
+              department: newUser.department,
+            },
+          },
+        },
+      });
+    }
+
+    // Handle Login
+    if (op.includes('login') || q.includes('login(')) {
+      const input = variables?.input || {};
+      const loginEmail = (input.email || '').trim().toLowerCase();
+      const loginPassword = input.password || '';
+
+      if (!loginEmail || !loginPassword) {
+        return NextResponse.json(
+          { errors: [{ message: 'Please provide both email and password.' }] },
+          { status: 400 }
+        );
+      }
+
+      const user = REGISTERED_ACCOUNTS.find(
+        (u) => u.email.toLowerCase() === loginEmail
+      );
+
+      // If user is not registered, REJECT!
+      if (!user) {
+        return NextResponse.json(
+          {
+            errors: [
+              {
+                message: 'Invalid credentials. This account is not registered. Please create an account first.',
+              },
+            ],
+          },
+          { status: 400 }
+        );
+      }
+
+      // If user is registered, check password
+      if (user.password && user.password !== loginPassword) {
+        return NextResponse.json(
+          {
+            errors: [
+              {
+                message: 'Invalid password. Please check your credentials.',
+              },
+            ],
+          },
+          { status: 400 }
+        );
+      }
+
+      const token = 'campvox_jwt_' + user.id + '_' + Date.now();
       return NextResponse.json({
         data: {
           login: {
-            token: 'campvox_session_token_' + Date.now(),
-            user,
-          },
-          register: {
-            token: 'campvox_session_token_' + Date.now(),
-            user,
+            token,
+            user: {
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              role: user.role,
+              departmentId: user.departmentId || null,
+              department: user.department || null,
+            },
           },
         },
       });
@@ -607,16 +775,28 @@ export async function POST(req: NextRequest) {
 
     if (op.includes('me') || q.includes('me {')) {
       const authHeader = req.headers.get('authorization') || '';
-      const isAdmToken = authHeader.includes('admin');
+      let matchedUser = REGISTERED_ACCOUNTS[2]; // Default to student
+      for (const u of REGISTERED_ACCOUNTS) {
+        if (authHeader.includes(u.id) || authHeader.includes(u.email)) {
+          matchedUser = u;
+          break;
+        }
+      }
+      if (authHeader.includes('admin')) {
+        matchedUser = REGISTERED_ACCOUNTS[0];
+      } else if (authHeader.includes('maint')) {
+        matchedUser = REGISTERED_ACCOUNTS[6];
+      }
+
       return NextResponse.json({
         data: {
           me: {
-            id: isAdmToken ? 'usr-admin' : 'usr-student',
-            name: isAdmToken ? 'Admin' : 'Alex Rivera',
-            email: isAdmToken ? 'admin@fixmycampus.edu' : 'student@campvox.edu',
-            role: isAdmToken ? 'ADMIN' : 'STUDENT',
-            departmentId: null,
-            department: null,
+            id: matchedUser.id,
+            name: matchedUser.name,
+            email: matchedUser.email,
+            role: matchedUser.role,
+            departmentId: matchedUser.departmentId || null,
+            department: matchedUser.department || null,
           },
         },
       });
