@@ -71,19 +71,10 @@ Live status progression view reflecting technician assignment, technician phone 
 
 ![Issue In Progress State](screenshots/05-issue-in-progress-assigned.png)
 
----
-
-### 6. Public Campus Facility Zones Navigation
-Unauthenticated public landing page hub granting guest visitors and campus residents transparent visibility into maintenance across campus sectors.
-
-![Campus Facility Zones](screenshots/06-facility-zones.png)
-
----
-
-### 7. Secure Role-Based Authentication
+### 6. Secure Role-Based Authentication
 Clean, dedicated student and administrative login interface with input verification and credential validation.
 
-![Secure Login Dialog](screenshots/07-login-card.png)
+![Secure Login Dialog](screenshots/06-login-card.png)
 
 ---
 
@@ -414,8 +405,7 @@ campvox/
 │   ├── 03-issue-details-admin.png
 │   ├── 04-worker-assignment-modal.png
 │   ├── 05-issue-in-progress-assigned.png
-│   ├── 06-facility-zones.png
-│   └── 07-login-card.png
+│   └── 06-login-card.png
 │
 ├── docker-compose.yml                 # Multi-Container Orchestration
 ├── test_auth_flow.js                  # Authentication Integration Test
